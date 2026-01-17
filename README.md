@@ -614,6 +614,57 @@ The project follows Test-Driven Development (TDD) with comprehensive test covera
 
 ---
 
+## 📋 **Evaluation Instructions**
+
+### **Viewing Development History**
+
+This project demonstrates **iterative development** with regular commits. To view the development progression:
+
+#### **View Commit History**
+```bash
+# Extract the ZIP file first
+unzip library_management_submission.zip
+cd library_management/
+
+# View all commits (shows iterative development)
+git log --oneline
+
+# View detailed commit messages
+git log --pretty=format:"%h - %s%n%b%n---"
+
+# View commits with dates
+git log --pretty=format:"%h %ad %s" --date=short
+```
+
+#### **Expected Output**
+You should see **10 commits** showing the development progression:
+```
+bd87df8 Implement mock authentication - no database required
+51337c9 Complete implementation with testing and documentation
+24d025a Story 4: Implement admin management dashboard
+5ebd61c Story 3: Implement book returning functionality
+e1e57ed Story 2: Implement book borrowing with business rules
+43e6bed Story 1: Implement book viewing functionality
+9399373 Implement basic app structure and authentication UI
+f411933 Implement service layer and Redux state management
+8a3a9de Implement domain layer with business entities and rules
+e94fe61 Initial project setup with Next.js, TypeScript, and testing configuration
+```
+
+#### **Running the Application**
+```bash
+# Install dependencies
+npm install
+
+# Run tests
+npm test
+
+# Start development server
+npm run dev
+```
+
+---
+
 ## 🤝 Contributing
 
 1. Follow the established TDD approach
