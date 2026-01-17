@@ -1,0 +1,1 @@
+{"version":3,"file":"BorrowLimitError.js","sourceRoot":"","sources":["../../src/errors/BorrowLimitError.ts"],"names":[],"mappings":";;;AAAA,MAAa,gBAAiB,SAAQ,KAAK;IACzC,YAAY,UAAkB,uDAAuD;QACnF,KAAK,CAAC,OAAO,CAAC,CAAC;QACf,IAAI,CAAC,IAAI,GAAG,kBAAkB,CAAC;IACjC,CAAC;CACF;AALD,4CAKC"}

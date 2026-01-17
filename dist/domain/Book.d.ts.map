@@ -1,0 +1,1 @@
+{"version":3,"file":"Book.d.ts","sourceRoot":"","sources":["../../src/domain/Book.ts"],"names":[],"mappings":"AAAA,qBAAa,IAAI;aAEG,KAAK,EAAE,MAAM;aACb,MAAM,EAAE,MAAM;gBADd,KAAK,EAAE,MAAM,EACb,MAAM,GAAE,MAAU;IAGpC,SAAS,IAAI,OAAO;IAIpB,eAAe,IAAI,IAAI;IAOvB,eAAe,IAAI,IAAI;CAGxB"}
