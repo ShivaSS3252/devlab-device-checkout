@@ -1,11 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './authSlice';
-import libraryReducer from './librarySlice';
+import devLabReducer from './librarySlice';
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
-    library: libraryReducer,
+    devlab: devLabReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

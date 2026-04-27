@@ -1,16 +1,16 @@
-# 📚 Library Management System
+# DevLab — Test Device Checkout System
 
-A complete frontend library management system built with React, Next.js, and TypeScript, demonstrating clean architecture, SOLID principles, TDD, and modern frontend development practices.
+A complete frontend device checkout system built with React, Next.js, and TypeScript, demonstrating clean architecture, SOLID principles, TDD, and modern frontend development practices.
 
 ## 🎯 Overview
 
-This project implements a comprehensive library management system with React, Next.js, and TypeScript. It features role-based access control, modern UI/UX, and demonstrates enterprise-level development practices.
+This project implements a comprehensive test device checkout system with React, Next.js, and TypeScript. It features role-based access control, modern UI/UX, and demonstrates enterprise-level development practices.
 
 ### ✨ Key Features
 
 - **🔐 Authentication System**: Mock OAuth2 with role-based access (User/Admin)
-- **👤 User Dashboard**: Browse books, borrow/return with business rule enforcement
-- **👨‍💼 Admin Dashboard**: Manage inventory, view user activity, add books
+- **👤 User Dashboard**: Browse devices, checkout/return with business rule enforcement
+- **👨‍💼 Admin Dashboard**: Manage inventory, view user activity, add devices
 - **🏗️ Domain Logic**: Clean architecture with SOLID principles and TDD
 - **🔄 State Management**: Redux Toolkit for predictable state updates
 - **🎨 UI/UX**: Modern, responsive interface with Tailwind CSS
@@ -41,31 +41,31 @@ src/
 │   └── providers.tsx     # Redux provider setup
 ├── components/            # React components
 │   ├── AdminDashboard.tsx # Admin management interface
-│   ├── UserDashboard.tsx  # User borrowing interface
+│   ├── UserDashboard.tsx  # User checkout interface
 │   ├── LoginPage.tsx      # Authentication form
 │   └── LoadingSpinner.tsx # Reusable loading component
 ├── domain/                # Business logic layer
-│   ├── Book.ts           # Book entity with business rules
-│   ├── User.ts           # User entity with borrowing logic
-│   └── Library.ts        # Library aggregate managing books/users
+│   ├── Device.ts         # Device entity with business rules
+│   ├── User.ts           # User entity with checkout logic
+│   └── DevLab.ts         # DevLab aggregate managing devices/users
 ├── services/              # Application services
-│   └── LibraryService.ts  # Orchestrates domain operations
+│   └── DevLabService.ts   # Orchestrates domain operations
 ├── store/                 # Redux state management
 │   ├── index.ts          # Store configuration
 │   ├── authSlice.ts       # Authentication state
-│   ├── librarySlice.ts    # Library state & async actions
+│   ├── librarySlice.ts    # Device state & async actions
 │   └── hooks.ts          # Typed Redux hooks
 ├── types/                 # TypeScript type definitions
 │   └── auth.ts           # Authentication types
 ├── constants/             # Business rule constants
-│   └── borrowing.ts      # Borrowing limits & rules
+│   └── borrowing.ts      # Checkout limits & rules
 ├── errors/                # Custom error classes
-│   ├── BorrowLimitError.ts    # Borrowing limit violations
-│   └── DuplicateBorrowError.ts # Duplicate borrow attempts
+│   ├── CheckoutLimitError.ts    # Checkout limit violations
+│   └── DuplicateCheckoutError.ts # Duplicate checkout attempts
 └── tests/                 # Test suites
-    ├── viewBooks.test.ts      # Viewing books functionality
-    ├── borrowBooks.test.ts    # Borrowing books functionality
-    └── returnBooks.test.ts    # Returning books functionality
+    ├── viewBooks.test.ts      # Viewing devices functionality
+    ├── borrowBooks.test.ts    # Checking out devices functionality
+    └── returnBooks.test.ts    # Returning devices functionality
 ```
 
 ### Authentication Flow Design Decisions
@@ -376,7 +376,7 @@ export class SecureAuthService {
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd library-management
+cd devlab
 
 # Install dependencies
 npm install
@@ -426,9 +426,9 @@ npm run type-check
 The project follows Test-Driven Development (TDD) with comprehensive test coverage:
 
 #### Test Files
-- **`tests/viewBooks.test.ts`**: Tests for viewing books functionality
-- **`tests/borrowBooks.test.ts`**: Tests for borrowing books with business rules
-- **`tests/returnBooks.test.ts`**: Tests for returning books and stock management
+- **`tests/viewBooks.test.ts`**: Tests for viewing devices functionality
+- **`tests/borrowBooks.test.ts`**: Tests for checking out devices with business rules
+- **`tests/returnBooks.test.ts`**: Tests for returning devices and inventory management
 
 #### Test Coverage
 - **Overall Coverage**: 93.37% statement coverage
@@ -449,37 +449,37 @@ The project follows Test-Driven Development (TDD) with comprehensive test covera
 
 ### Assignment Stories Mapping
 
-#### ✅ **Story 1: Viewing Books**
-- **As a user**, I want to view all available books in the library
-- **Implementation**: `LibraryService.viewBooks()` returns readonly array
-- **Tests**: Empty library and populated library scenarios
-- **UI**: Books displayed in responsive grid layout
+#### ✅ **Story 1: Viewing Devices**
+- **As a user**, I want to view all available devices in the DevLab
+- **Implementation**: `DevLabService.viewDevices()` returns readonly array
+- **Tests**: Empty DevLab and populated DevLab scenarios
+- **UI**: Devices displayed in responsive grid layout
 
-#### ✅ **Story 2: Borrowing Books**
-- **As a user**, I want to borrow books with proper validation
+#### ✅ **Story 2: Checking Out Devices**
+- **As a user**, I want to check out devices with proper validation
 - **Business Rules**:
-  - Maximum 2 books per user (`MAX_BOOKS_PER_USER = 2`)
-  - Cannot borrow the same book twice
-  - Multiple copies: decrement count
-  - Single copy: remove from library
-- **Error Handling**: `BorrowLimitError`, `DuplicateBorrowError`
+  - Maximum 2 devices per user (`MAX_DEVICES_PER_USER = 2`)
+  - Cannot check out the same device twice
+  - Multiple units: decrement count
+  - Single unit: remove from DevLab
+- **Error Handling**: `CheckoutLimitError`, `DuplicateCheckoutError`
 - **Tests**: 9 test cases covering all scenarios
 
-#### ✅ **Story 3: Returning Books**
-- **As a user**, I want to return borrowed books
-- **Stock Management**:
-  - Existing book: increment copy count
-  - New book: add to library inventory
-- **Validation**: User must have borrowed the book
+#### ✅ **Story 3: Returning Devices**
+- **As a user**, I want to return checked out devices
+- **Inventory Management**:
+  - Existing device: increment unit count
+  - New device: add to DevLab inventory
+- **Validation**: User must have checked out the device
 - **Tests**: 6 test cases covering return scenarios
 
 #### ✅ **Story 4: Admin Management**
-- **As an admin**, I want to manage library inventory
+- **As an admin**, I want to manage DevLab inventory
 - **Features**:
-  - Add new books to inventory
-  - View all users and their borrowing activity
-  - Monitor total books and copies
-  - Paginated user/book lists
+  - Add new devices to inventory
+  - View all users and their checkout activity
+  - Monitor total devices and units
+  - Paginated user/device lists
 - **UI**: Dedicated admin dashboard with stats and management tools
 
 ### Additional Features
@@ -496,7 +496,7 @@ The project follows Test-Driven Development (TDD) with comprehensive test covera
 - Intuitive user flows and interactions
 
 #### 📊 **Dashboard Analytics**
-- Real-time statistics (total books, borrowed books, active users)
+- Real-time statistics (total devices, checked out devices, active users)
 - Visual status indicators
 - Pagination for large datasets
 
@@ -597,8 +597,8 @@ The project follows Test-Driven Development (TDD) with comprehensive test covera
 - Offline support with service workers
 - Push notifications
 - Advanced search and filtering
-- Book recommendations system
-- User borrowing history
+- Device availability suggestions
+- User checkout history
 - Due date tracking and reminders
 
 ---
@@ -623,8 +623,8 @@ This project demonstrates **iterative development** with regular commits. To vie
 #### **View Commit History**
 ```bash
 # Extract the ZIP file first
-unzip library_management_submission.zip
-cd library_management/
+unzip devlab_submission.zip
+cd devlab/
 
 # View all commits (shows iterative development)
 git log --oneline
@@ -642,9 +642,9 @@ You should see **10 commits** showing the development progression:
 bd87df8 Implement mock authentication - no database required
 51337c9 Complete implementation with testing and documentation
 24d025a Story 4: Implement admin management dashboard
-5ebd61c Story 3: Implement book returning functionality
-e1e57ed Story 2: Implement book borrowing with business rules
-43e6bed Story 1: Implement book viewing functionality
+5ebd61c Story 3: Implement device returning functionality
+e1e57ed Story 2: Implement device checkout with business rules
+43e6bed Story 1: Implement device viewing functionality
 9399373 Implement basic app structure and authentication UI
 f411933 Implement service layer and Redux state management
 8a3a9de Implement domain layer with business entities and rules

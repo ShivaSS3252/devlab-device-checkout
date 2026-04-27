@@ -1,23 +1,21 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { Book } from '@/domain/Book';
+import { Device } from '@/domain/Device';
 import { User } from '@/domain/User';
-import { Library } from '@/domain/Library';
-import { BorrowLimitError } from '@/errors/BorrowLimitError';
-import { DuplicateBorrowError } from '@/errors/DuplicateBorrowError';
-import { LibraryService } from '@/services/LibraryService';
+import { DevLab } from '@/domain/DevLab';
+import { CheckoutLimitError } from '@/errors/CheckoutLimitError';
+import { DuplicateCheckoutError } from '@/errors/DuplicateCheckoutError';
+import { DevLabService } from '@/services/DevLabService';
 import { RootState } from './index';
 
-export interface LibraryState {
-  books: Book[];
+export interface DevLabState {
+  books: Device[];
   users: User[];
   currentUser: User | null;
   isLoading: boolean;
   error: string | null;
 }
 
-
-
-const initialState: LibraryState = {
+const initialState: DevLabState = {
   books: [],
   users: [],
   currentUser: null,
@@ -25,58 +23,42 @@ const initialState: LibraryState = {
   error: null,
 };
 
-
-
-/**
- * Fetch books from Redux state
- * @returns Array of books from current state
- */
-export const fetchBooksAsync = createAsyncThunk(
-  'library/fetchBooks',
+export const fetchDevicesAsync = createAsyncThunk(
+  'devlab/fetchDevices',
   async (_, { getState }) => {
     const state = getState() as RootState;
-    return state.library.books;
+    return state.devlab.books;
   }
 );
 
-/**
- * Borrow a book for a user
- * @param params - Object containing userId and bookTitle
- * @param params.userId - ID of the user borrowing the book
- * @param params.bookTitle - Title of the book to borrow
- * @returns Updated library state with borrowed book
- */
-export const borrowBookAsync = createAsyncThunk(
-  'library/borrowBook',
+export const checkoutDeviceAsync = createAsyncThunk(
+  'devlab/checkoutDevice',
   async ({ userId, bookTitle }: { userId: string; bookTitle: string }, { getState, rejectWithValue }) => {
     try {
       const state = getState() as RootState;
-      const { books, users, currentUser } = state.library;
+      const { books, users, currentUser } = state.devlab;
 
-      // Find the user and book
       const user = currentUser || users.find((u: User) => u.id === userId);
-      const book = books.find((b: Book) => b.title === bookTitle);
+      const device = books.find((b: Device) => b.name === bookTitle);
 
       if (!user) {
         throw new Error('User not found');
       }
-      if (!book || book.copies === 0) {
-        throw new Error('Book not available');
+      if (!device || device.units === 0) {
+        throw new Error('Device not available');
       }
-      if (user.borrowedBooks.length >= 2) {
-        throw new BorrowLimitError();
+      if (user.checkedOutDevices.length >= 2) {
+        throw new CheckoutLimitError();
       }
-      if (user.borrowedBooks.includes(bookTitle)) {
-        throw new DuplicateBorrowError();
+      if (user.checkedOutDevices.includes(bookTitle)) {
+        throw new DuplicateCheckoutError();
       }
 
-      // Update book copies
-      const updatedBooks = books.map((b: Book) =>
-        b.title === bookTitle ? b.decrementCopies() : b
-      ).filter((b: Book) => b.hasCopies()); // Remove books with 0 copies
+      const updatedBooks = books.map((b: Device) =>
+        b.name === bookTitle ? b.decrementCopies() : b
+      ).filter((b: Device) => b.hasCopies());
 
-      // Update user borrowed books
-      const updatedUser = user.borrowBook(bookTitle);
+      const updatedUser = user.checkoutDevice(bookTitle);
       const updatedUsers = users.map((u: User) =>
         u.id === userId ? updatedUser : u
       );
@@ -87,77 +69,59 @@ export const borrowBookAsync = createAsyncThunk(
         currentUser: updatedUser
       };
     } catch (error) {
-      if (error instanceof BorrowLimitError) {
-        return rejectWithValue('Borrow limit exceeded (max 2 books)');
+      if (error instanceof CheckoutLimitError) {
+        return rejectWithValue('Checkout limit exceeded (max 2 devices)');
       }
-      if (error instanceof DuplicateBorrowError) {
-        return rejectWithValue('You cannot borrow the same book twice');
+      if (error instanceof DuplicateCheckoutError) {
+        return rejectWithValue('You cannot checkout the same device twice');
       }
-      return rejectWithValue('Failed to borrow book');
+      return rejectWithValue('Failed to checkout device');
     }
   }
 );
 
-/**
- * Return a borrowed book
- * @param params - Object containing userId and bookTitle
- * @param params.userId - ID of the user returning the book
- * @param params.bookTitle - Title of the book to return
- * @returns Updated library state after book return
- */
-export const returnBookAsync = createAsyncThunk(
-  'library/returnBook',
+export const returnDeviceAsync = createAsyncThunk(
+  'devlab/returnDevice',
   async ({ userId, bookTitle }: { userId: string; bookTitle: string }, { getState }) => {
     const state = getState() as RootState;
-    const library = new LibraryService(new Library(state.library.books, state.library.users));
+    const service = new DevLabService(new DevLab(state.devlab.books, state.devlab.users));
 
-    const updatedLibrary = library.returnBook(userId, bookTitle);
+    const updated = service.returnDevice(userId, bookTitle);
 
     return {
-      books: [...updatedLibrary.getBooks()],
-      users: [...updatedLibrary.getUsers()],
-      currentUser: updatedLibrary.getUser(userId) || null
+      books: [...updated.getBooks()],
+      users: [...updated.getUsers()],
+      currentUser: updated.getUser(userId) || null
     };
   }
 );
 
-/**
- * Add a book to the library inventory
- * @param book - Book to add to inventory
- * @returns Updated books array
- */
-export const addBookAsync = createAsyncThunk(
-  'library/addBook',
-  async (book: Book, { getState }) => {
+export const addDeviceAsync = createAsyncThunk(
+  'devlab/addDevice',
+  async (device: Device, { getState }) => {
     const state = getState() as RootState;
-    const currentBooks = state.library.books;
+    const currentBooks = state.devlab.books;
 
-    // Check if book already exists
-    const existingBook = currentBooks.find((b: Book) => b.title === book.title);
-    const updatedBooks = existingBook
-      ? currentBooks.map((b: Book) => b.title === book.title ? new Book(b.title, b.copies + book.copies) : b)
-      : [...currentBooks, book];
+    const existing = currentBooks.find((b: Device) => b.name === device.name);
+    const updatedBooks = existing
+      ? currentBooks.map((b: Device) => b.name === device.name ? new Device(b.name, b.units + device.units) : b)
+      : [...currentBooks, device];
 
     return updatedBooks;
   }
 );
 
-/**
- * Add a user to the library system
- * @param user - User to add to the system
- * @returns Updated users array
- */
 export const addUserAsync = createAsyncThunk(
-  'library/addUser',
+  'devlab/addUser',
   async (user: User, { getState }) => {
     const state = getState() as RootState;
-    const currentUsers = state.library.users;
+    const currentUsers = state.devlab.users;
     return [...currentUsers, user];
   }
 );
 
-const librarySlice = createSlice({
-  name: 'library',
+const devLabSlice = createSlice({
+  name: 'devlab',
   initialState,
   reducers: {
     clearError: (state) => {
@@ -166,58 +130,58 @@ const librarySlice = createSlice({
     setCurrentUser: (state, action: PayloadAction<User>) => {
       state.currentUser = action.payload;
     },
-    initializeLibrary: (state, action: PayloadAction<{ books: Book[]; users: User[] }>) => {
+    initializeDevLab: (state, action: PayloadAction<{ books: Device[]; users: User[] }>) => {
       state.books = action.payload.books;
       state.users = action.payload.users;
     },
   },
   extraReducers: (builder) => {
     builder
-      // Fetch Books
-      .addCase(fetchBooksAsync.pending, (state) => {
+      // Fetch Devices
+      .addCase(fetchDevicesAsync.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(fetchBooksAsync.fulfilled, (state, action) => {
+      .addCase(fetchDevicesAsync.fulfilled, (state, action) => {
         state.isLoading = false;
         state.books = action.payload;
       })
-      .addCase(fetchBooksAsync.rejected, (state, action) => {
+      .addCase(fetchDevicesAsync.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       })
-      // Borrow Book
-      .addCase(borrowBookAsync.pending, (state) => {
+      // Checkout Device
+      .addCase(checkoutDeviceAsync.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(borrowBookAsync.fulfilled, (state, action) => {
+      .addCase(checkoutDeviceAsync.fulfilled, (state, action) => {
         state.isLoading = false;
         state.books = action.payload.books;
         state.users = action.payload.users;
         state.currentUser = action.payload.currentUser;
       })
-      .addCase(borrowBookAsync.rejected, (state, action) => {
+      .addCase(checkoutDeviceAsync.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       })
-      // Return Book
-      .addCase(returnBookAsync.pending, (state) => {
+      // Return Device
+      .addCase(returnDeviceAsync.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(returnBookAsync.fulfilled, (state, action) => {
+      .addCase(returnDeviceAsync.fulfilled, (state, action) => {
         state.isLoading = false;
         state.books = action.payload.books;
         state.users = action.payload.users;
         state.currentUser = action.payload.currentUser;
       })
-      .addCase(returnBookAsync.rejected, (state, action) => {
+      .addCase(returnDeviceAsync.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       })
-      // Add Book
-      .addCase(addBookAsync.fulfilled, (state, action) => {
+      // Add Device
+      .addCase(addDeviceAsync.fulfilled, (state, action) => {
         state.books = action.payload;
       })
       // Add User
@@ -227,5 +191,5 @@ const librarySlice = createSlice({
   },
 });
 
-export const { clearError, setCurrentUser, initializeLibrary } = librarySlice.actions;
-export default librarySlice.reducer;
+export const { clearError, setCurrentUser, initializeDevLab } = devLabSlice.actions;
+export default devLabSlice.reducer;

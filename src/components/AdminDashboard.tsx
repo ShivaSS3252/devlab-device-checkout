@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
-import { fetchBooksAsync, addBookAsync, borrowBookAsync, returnBookAsync } from '@/store/librarySlice'
+import { fetchDevicesAsync, addDeviceAsync, checkoutDeviceAsync, returnDeviceAsync } from '@/store/librarySlice'
 import { logoutAsync } from '@/store/authSlice'
-import { Book } from '@/domain/Book'
+import { Device } from '@/domain/Device'
 import { User } from '@/domain/User'
 import { useToast } from '@/contexts/ToastContext'
 import { Pagination } from './Pagination'
@@ -13,91 +13,88 @@ import { ITEMS_PER_PAGE } from '@/constants/borrowing'
 export function AdminDashboard() {
   const dispatch = useAppDispatch()
   const { user } = useAppSelector((state) => state.auth)
-  const { books, users, currentUser, isLoading, error } = useAppSelector((state) => state.library)
+  const { books, users, currentUser, isLoading, error } = useAppSelector((state) => state.devlab)
   const { showError, showSuccess } = useToast()
 
-  const [newBookTitle, setNewBookTitle] = useState('')
-  const [newBookCopies, setNewBookCopies] = useState(1)
-  const [showAddBook, setShowAddBook] = useState(false)
+  const [newDeviceName, setNewDeviceName] = useState('')
+  const [newDeviceUnits, setNewDeviceUnits] = useState(1)
+  const [showAddDevice, setShowAddDevice] = useState(false)
 
   // Pagination states
-  const [booksCurrentPage, setBooksCurrentPage] = useState(1)
+  const [devicesCurrentPage, setDevicesCurrentPage] = useState(1)
   const [usersCurrentPage, setUsersCurrentPage] = useState(1)
-  const [availableBooksCurrentPage, setAvailableBooksCurrentPage] = useState(1)
+  const [availableDevicesCurrentPage, setAvailableDevicesCurrentPage] = useState(1)
 
   useEffect(() => {
-    dispatch(fetchBooksAsync())
+    dispatch(fetchDevicesAsync())
   }, [dispatch])
 
-  // Show error toast when there's an error
   useEffect(() => {
     if (error) {
       showError('Operation Failed', error)
     }
   }, [error, showError])
 
-  const handleAddBook = async (e: React.FormEvent) => {
+  const handleAddDevice = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (newBookTitle.trim()) {
-      await dispatch(addBookAsync(new Book(newBookTitle.trim(), newBookCopies)))
-      setNewBookTitle('')
-      setNewBookCopies(1)
-      setShowAddBook(false)
-      showSuccess('Book added successfully')
+    if (newDeviceName.trim()) {
+      await dispatch(addDeviceAsync(new Device(newDeviceName.trim(), newDeviceUnits)))
+      setNewDeviceName('')
+      setNewDeviceUnits(1)
+      setShowAddDevice(false)
+      showSuccess('Device added successfully')
     }
   }
 
-  const handleAdminBorrow = async (bookTitle: string) => {
+  const handleAdminCheckout = async (deviceName: string) => {
     if (user) {
-      await dispatch(borrowBookAsync({ userId: user.id, bookTitle }))
-      showSuccess(`Successfully borrowed "${bookTitle}"`)
+      await dispatch(checkoutDeviceAsync({ userId: user.id, bookTitle: deviceName }))
+      showSuccess(`Successfully checked out "${deviceName}"`)
     }
   }
 
-  const handleAdminReturn = async (bookTitle: string) => {
+  const handleAdminReturn = async (deviceName: string) => {
     if (user) {
-      await dispatch(returnBookAsync({ userId: user.id, bookTitle }))
-      showSuccess(`Successfully returned "${bookTitle}"`)
+      await dispatch(returnDeviceAsync({ userId: user.id, bookTitle: deviceName }))
+      showSuccess(`Successfully returned "${deviceName}"`)
     }
   }
 
-  const getTotalCopies = () => books.reduce((total: number, book: Book) => total + book.copies, 0)
-  const getBorrowedBooksCount = () => users.reduce((total: number, user: User) => total + user.borrowedBooks.length, 0)
-  const getActiveUsers = () => users.filter((user: User) => user.borrowedBooks.length > 0).length
+  const getTotalUnits = () => books.reduce((total: number, device: Device) => total + device.units, 0)
+  const getCheckedOutCount = () => users.reduce((total: number, u: User) => total + u.checkedOutDevices.length, 0)
+  const getActiveUsers = () => users.filter((u: User) => u.checkedOutDevices.length > 0).length
 
-  const getAdminBorrowedBooks = () => {
-    return currentUser?.borrowedBooks || []
+  const getAdminCheckedOut = () => {
+    return currentUser?.checkedOutDevices || []
   }
 
   // Pagination calculations
-  const booksTotalPages = Math.ceil(books.length / ITEMS_PER_PAGE)
-  const booksStartIndex = (booksCurrentPage - 1) * ITEMS_PER_PAGE
-  const booksEndIndex = booksStartIndex + ITEMS_PER_PAGE
-  const booksToDisplay = books.slice(booksStartIndex, booksEndIndex)
+  const devicesTotalPages = Math.ceil(books.length / ITEMS_PER_PAGE)
+  const devicesStartIndex = (devicesCurrentPage - 1) * ITEMS_PER_PAGE
+  const devicesEndIndex = devicesStartIndex + ITEMS_PER_PAGE
+  const devicesToDisplay = books.slice(devicesStartIndex, devicesEndIndex)
 
   const usersTotalPages = Math.ceil(users.length / ITEMS_PER_PAGE)
   const usersStartIndex = (usersCurrentPage - 1) * ITEMS_PER_PAGE
   const usersEndIndex = usersStartIndex + ITEMS_PER_PAGE
   const usersToDisplay = users.slice(usersStartIndex, usersEndIndex)
 
-  // Available books for borrowing (filtered and paginated)
-  const availableBooks = books.filter(book => book.copies > 0 && !getAdminBorrowedBooks().includes(book.title))
-  const availableBooksTotalPages = Math.ceil(availableBooks.length / ITEMS_PER_PAGE)
-  const availableBooksStartIndex = (availableBooksCurrentPage - 1) * ITEMS_PER_PAGE
-  const availableBooksEndIndex = availableBooksStartIndex + ITEMS_PER_PAGE
-  const availableBooksToDisplay = availableBooks.slice(availableBooksStartIndex, availableBooksEndIndex)
+  const availableDevices = books.filter(device => device.units > 0 && !getAdminCheckedOut().includes(device.name))
+  const availableDevicesTotalPages = Math.ceil(availableDevices.length / ITEMS_PER_PAGE)
+  const availableDevicesStartIndex = (availableDevicesCurrentPage - 1) * ITEMS_PER_PAGE
+  const availableDevicesEndIndex = availableDevicesStartIndex + ITEMS_PER_PAGE
+  const availableDevicesToDisplay = availableDevices.slice(availableDevicesStartIndex, availableDevicesEndIndex)
 
-  // Pagination handlers
-  const handleBooksPageChange = (page: number) => {
-    setBooksCurrentPage(page)
+  const handleDevicesPageChange = (page: number) => {
+    setDevicesCurrentPage(page)
   }
 
   const handleUsersPageChange = (page: number) => {
     setUsersCurrentPage(page)
   }
 
-  const handleAvailableBooksPageChange = (page: number) => {
-    setAvailableBooksCurrentPage(page)
+  const handleAvailableDevicesPageChange = (page: number) => {
+    setAvailableDevicesCurrentPage(page)
   }
 
   if (!user) return null
@@ -114,7 +111,7 @@ export function AdminDashboard() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
               </div>
-              <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+              <h1 className="text-2xl font-bold text-gray-900">DevLab Admin</h1>
             </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
@@ -150,14 +147,14 @@ export function AdminDashboard() {
                 <div className="flex-shrink-0">
                   <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                     <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                   </div>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-medium text-gray-900">Total Books</h3>
+                  <h3 className="text-lg font-medium text-gray-900">Total Devices</h3>
                   <p className="text-3xl font-bold text-blue-600">{books.length}</p>
-                  <p className="text-sm text-gray-500">Unique titles</p>
+                  <p className="text-sm text-gray-500">Device models</p>
                 </div>
               </div>
             </div>
@@ -172,9 +169,9 @@ export function AdminDashboard() {
                   </div>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-medium text-gray-900">Total Copies</h3>
-                  <p className="text-3xl font-bold text-green-600">{getTotalCopies()}</p>
-                  <p className="text-sm text-gray-500">Available copies</p>
+                  <h3 className="text-lg font-medium text-gray-900">Total Units</h3>
+                  <p className="text-3xl font-bold text-green-600">{getTotalUnits()}</p>
+                  <p className="text-sm text-gray-500">Available units</p>
                 </div>
               </div>
             </div>
@@ -189,9 +186,9 @@ export function AdminDashboard() {
                   </div>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-medium text-gray-900">Borrowed Books</h3>
-                  <p className="text-3xl font-bold text-yellow-600">{getBorrowedBooksCount()}</p>
-                  <p className="text-sm text-gray-500">Currently borrowed</p>
+                  <h3 className="text-lg font-medium text-gray-900">Checked Out</h3>
+                  <p className="text-3xl font-bold text-yellow-600">{getCheckedOutCount()}</p>
+                  <p className="text-sm text-gray-500">Currently checked out</p>
                 </div>
               </div>
             </div>
@@ -208,39 +205,39 @@ export function AdminDashboard() {
                 <div className="ml-4">
                   <h3 className="text-lg font-medium text-gray-900">Active Users</h3>
                   <p className="text-3xl font-bold text-purple-600">{getActiveUsers()}</p>
-                  <p className="text-sm text-gray-500">With borrowed books</p>
+                  <p className="text-sm text-gray-500">With active checkouts</p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Admin Personal Borrowing */}
+          {/* Admin Personal Checkout */}
           <div className="mb-8 bg-white rounded-xl shadow-lg border border-gray-100 p-8">
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">My Borrowed Books</h2>
-                <p className="text-gray-600 mt-1">Borrow and return books like any user (2-book limit applies)</p>
+                <h2 className="text-2xl font-bold text-gray-900">My Checkouts</h2>
+                <p className="text-gray-600 mt-1">Checkout and return devices like any user (2-device limit applies)</p>
               </div>
               <div className="flex items-center space-x-2">
-                <div className={`w-3 h-3 rounded-full ${getAdminBorrowedBooks().length >= 2 ? 'bg-red-400' : getAdminBorrowedBooks().length === 1 ? 'bg-yellow-400' : 'bg-green-400'} animate-pulse`}></div>
-                <span className="text-sm font-medium text-gray-600">{getAdminBorrowedBooks().length}/2 books borrowed</span>
+                <div className={`w-3 h-3 rounded-full ${getAdminCheckedOut().length >= 2 ? 'bg-red-400' : getAdminCheckedOut().length === 1 ? 'bg-yellow-400' : 'bg-green-400'} animate-pulse`}></div>
+                <span className="text-sm font-medium text-gray-600">{getAdminCheckedOut().length}/2 devices checked out</span>
               </div>
             </div>
 
-            {/* Admin Borrowed Books List */}
-            {getAdminBorrowedBooks().length > 0 && (
+            {/* Admin Checked Out List */}
+            {getAdminCheckedOut().length > 0 && (
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Currently Borrowed</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Currently Checked Out</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {getAdminBorrowedBooks().map((bookTitle) => (
-                    <div key={bookTitle} className="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-lg p-4">
+                  {getAdminCheckedOut().map((deviceName) => (
+                    <div key={deviceName} className="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-lg p-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h4 className="text-sm font-semibold text-gray-900">{bookTitle}</h4>
-                          <p className="text-xs text-gray-600">Borrowed by you</p>
+                          <h4 className="text-sm font-semibold text-gray-900">{deviceName}</h4>
+                          <p className="text-xs text-gray-600">Checked out by you</p>
                         </div>
                         <button
-                          onClick={() => handleAdminReturn(bookTitle)}
+                          onClick={() => handleAdminReturn(deviceName)}
                           disabled={isLoading}
                           className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 transform transition-all duration-200 hover:scale-105"
                         >
@@ -256,47 +253,47 @@ export function AdminDashboard() {
               </div>
             )}
 
-            {/* Quick Borrow Section */}
+            {/* Quick Checkout Section */}
             <div className="border-t border-gray-200 pt-6">
               <div className="flex justify-between items-center mb-3">
-                <h3 className="text-lg font-semibold text-gray-900">Available Books to Borrow</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Available Devices to Checkout</h3>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                  <span className="text-sm font-medium text-gray-600">{availableBooks.length} books available</span>
+                  <span className="text-sm font-medium text-gray-600">{availableDevices.length} devices available</span>
                 </div>
               </div>
-              {availableBooks.length === 0 ? (
-                <p className="text-gray-600">No books available to borrow or you've reached your limit.</p>
+              {availableDevices.length === 0 ? (
+                <p className="text-gray-600">No devices available to checkout or you&apos;ve reached your limit.</p>
               ) : (
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                    {availableBooksToDisplay.map((book) => (
-                      <div key={book.title} className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4">
+                    {availableDevicesToDisplay.map((device) => (
+                      <div key={device.name} className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4">
                         <div className="flex items-center justify-between">
                           <div>
-                            <h4 className="text-sm font-semibold text-gray-900">{book.title}</h4>
-                            <p className="text-xs text-gray-600">{book.copies} copies available</p>
+                            <h4 className="text-sm font-semibold text-gray-900">{device.name}</h4>
+                            <p className="text-xs text-gray-600">{device.units} units available</p>
                           </div>
                           <button
-                            onClick={() => handleAdminBorrow(book.title)}
-                            disabled={isLoading || getAdminBorrowedBooks().length >= 2}
+                            onClick={() => handleAdminCheckout(device.name)}
+                            disabled={isLoading || getAdminCheckedOut().length >= 2}
                             className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transform transition-all duration-200 hover:scale-105"
                           >
                             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                             </svg>
-                            Borrow
+                            Checkout
                           </button>
                         </div>
                       </div>
                     ))}
                   </div>
 
-                  {availableBooksTotalPages > 1 && (
+                  {availableDevicesTotalPages > 1 && (
                     <Pagination
-                      currentPage={availableBooksCurrentPage}
-                      totalPages={availableBooksTotalPages}
-                      onPageChange={handleAvailableBooksPageChange}
+                      currentPage={availableDevicesCurrentPage}
+                      totalPages={availableDevicesTotalPages}
+                      onPageChange={handleAvailableDevicesPageChange}
                       disabled={isLoading}
                     />
                   )}
@@ -305,45 +302,45 @@ export function AdminDashboard() {
             </div>
           </div>
 
-          {/* Add Book Section */}
+          {/* Add Device Section */}
           <div className="mb-8 bg-white rounded-xl shadow-lg border border-gray-100 p-8">
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">Manage Inventory</h2>
-                <p className="text-gray-600 mt-1">Add new books to the library collection</p>
+                <p className="text-gray-600 mt-1">Add new devices to the DevLab collection</p>
               </div>
               <button
-                onClick={() => setShowAddBook(!showAddBook)}
+                onClick={() => setShowAddDevice(!showAddDevice)}
                 className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transform transition-all duration-200 hover:scale-105 shadow-lg"
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
-                {showAddBook ? 'Cancel' : 'Add New Book'}
+                {showAddDevice ? 'Cancel' : 'Add Device'}
               </button>
             </div>
 
-            {showAddBook && (
-              <form onSubmit={handleAddBook} className="border-t border-gray-200 pt-6">
+            {showAddDevice && (
+              <form onSubmit={handleAddDevice} className="border-t border-gray-200 pt-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2">Book Title</label>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">Device Name</label>
                     <input
                       type="text"
-                      value={newBookTitle}
-                      onChange={(e) => setNewBookTitle(e.target.value)}
+                      value={newDeviceName}
+                      onChange={(e) => setNewDeviceName(e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      placeholder="Enter book title"
+                      placeholder="e.g. iPhone 15 Pro"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2">Number of Copies</label>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">Number of Units</label>
                     <input
                       type="number"
                       min="1"
-                      value={newBookCopies}
-                      onChange={(e) => setNewBookCopies(parseInt(e.target.value) || 1)}
+                      value={newDeviceUnits}
+                      onChange={(e) => setNewDeviceUnits(parseInt(e.target.value) || 1)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                       required
                     />
@@ -357,11 +354,11 @@ export function AdminDashboard() {
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    Add Book
+                    Add Device
                   </button>
                   <button
                     type="button"
-                    onClick={() => setShowAddBook(false)}
+                    onClick={() => setShowAddDevice(false)}
                     className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200"
                   >
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -374,20 +371,19 @@ export function AdminDashboard() {
             )}
           </div>
 
-          {/* Books Management */}
+          {/* Device Inventory */}
           <div className="mb-8 bg-white rounded-xl shadow-lg border border-gray-100 p-8">
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Book Inventory</h2>
-                <p className="text-gray-600 mt-1">Monitor and manage your library collection</p>
+                <h2 className="text-2xl font-bold text-gray-900">Device Inventory</h2>
+                <p className="text-gray-600 mt-1">Monitor and manage your DevLab collection</p>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium text-gray-600">{books.length} books in inventory</span>
+                <span className="text-sm font-medium text-gray-600">{books.length} devices in inventory</span>
               </div>
             </div>
 
-            {/* Error Message */}
             {error && (
               <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
                 <div className="flex items-center">
@@ -408,11 +404,11 @@ export function AdminDashboard() {
               <div className="text-center py-12">
                 <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No books in inventory</h3>
-                <p className="text-gray-600">Add some books to get started with your library management.</p>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No devices in inventory</h3>
+                <p className="text-gray-600">Add some devices to get started with your DevLab management.</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -420,10 +416,10 @@ export function AdminDashboard() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Book Title
+                        Device Name
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Copies Available
+                        Units Available
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                         Status
@@ -431,25 +427,25 @@ export function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {booksToDisplay.map((book: Book) => (
-                      <tr key={book.title} className="hover:bg-gray-50 transition-colors duration-150">
+                    {devicesToDisplay.map((device: Device) => (
+                      <tr key={device.name} className="hover:bg-gray-50 transition-colors duration-150">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                          {book.title}
+                          {device.name}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {book.copies}
+                          {device.units}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${
-                            book.copies === 0 ? 'bg-red-100 text-red-800' :
-                            book.copies === 1 ? 'bg-yellow-100 text-yellow-800' :
+                            device.units === 0 ? 'bg-red-100 text-red-800' :
+                            device.units === 1 ? 'bg-yellow-100 text-yellow-800' :
                             'bg-green-100 text-green-800'
                           }`}>
                             <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                             </svg>
-                            {book.copies === 0 ? 'Out of Stock' :
-                             book.copies === 1 ? 'Low Stock' :
+                            {device.units === 0 ? 'Out of Stock' :
+                             device.units === 1 ? 'Low Stock' :
                              'Available'}
                           </span>
                         </td>
@@ -459,9 +455,9 @@ export function AdminDashboard() {
                 </table>
 
                 <Pagination
-                  currentPage={booksCurrentPage}
-                  totalPages={booksTotalPages}
-                  onPageChange={handleBooksPageChange}
+                  currentPage={devicesCurrentPage}
+                  totalPages={devicesTotalPages}
+                  onPageChange={handleDevicesPageChange}
                   disabled={isLoading}
                 />
               </div>
@@ -473,7 +469,7 @@ export function AdminDashboard() {
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">User Activity</h2>
-                <p className="text-gray-600 mt-1">Track borrowing activity and user engagement</p>
+                <p className="text-gray-600 mt-1">Track checkout activity and user engagement</p>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse"></div>
@@ -489,7 +485,7 @@ export function AdminDashboard() {
                   </svg>
                 </div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No registered users</h3>
-                <p className="text-gray-600">Users will appear here once they start using the library.</p>
+                <p className="text-gray-600">Users will appear here once they start using the DevLab.</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -503,7 +499,7 @@ export function AdminDashboard() {
                         Account Type
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Borrowed Books
+                        Checked Out
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                         Status
@@ -526,16 +522,16 @@ export function AdminDashboard() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex flex-col space-y-1">
-                            <span className="text-sm font-medium text-gray-900">{u.borrowedBooks.length} books</span>
-                            {u.borrowedBooks.length > 0 && (
+                            <span className="text-sm font-medium text-gray-900">{u.checkedOutDevices.length} devices</span>
+                            {u.checkedOutDevices.length > 0 && (
                               <div className="flex flex-wrap gap-1 max-w-xs">
-                                {u.borrowedBooks.map((bookTitle, index) => (
+                                {u.checkedOutDevices.map((deviceName, index) => (
                                   <span
                                     key={index}
                                     className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded-full"
-                                    title={bookTitle}
+                                    title={deviceName}
                                   >
-                                    {bookTitle.length > 15 ? `${bookTitle.substring(0, 15)}...` : bookTitle}
+                                    {deviceName.length > 15 ? `${deviceName.substring(0, 15)}...` : deviceName}
                                   </span>
                                 ))}
                               </div>
@@ -544,15 +540,15 @@ export function AdminDashboard() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${
-                            u.borrowedBooks.length >= 2 ? 'bg-red-100 text-red-800' :
-                            u.borrowedBooks.length === 1 ? 'bg-yellow-100 text-yellow-800' :
+                            u.checkedOutDevices.length >= 2 ? 'bg-red-100 text-red-800' :
+                            u.checkedOutDevices.length === 1 ? 'bg-yellow-100 text-yellow-800' :
                             'bg-green-100 text-green-800'
                           }`}>
                             <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                             </svg>
-                            {u.borrowedBooks.length >= 2 ? 'At Limit' :
-                             u.borrowedBooks.length === 1 ? 'Active' :
+                            {u.checkedOutDevices.length >= 2 ? 'At Limit' :
+                             u.checkedOutDevices.length === 1 ? 'Active' :
                              'Available'}
                           </span>
                         </td>

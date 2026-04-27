@@ -1,87 +1,87 @@
-import { Library } from '../src/domain/Library';
-import { Book } from '../src/domain/Book';
+import { DevLab } from '../src/domain/DevLab';
+import { Device } from '../src/domain/Device';
 import { User } from '../src/domain/User';
-import { LibraryService } from '../src/services/LibraryService';
-import { BorrowLimitError } from '../src/errors/BorrowLimitError';
-import { DuplicateBorrowError } from '../src/errors/DuplicateBorrowError';
+import { DevLabService } from '../src/services/DevLabService';
+import { CheckoutLimitError } from '../src/errors/CheckoutLimitError';
+import { DuplicateCheckoutError } from '../src/errors/DuplicateCheckoutError';
 
-describe('Borrowing Books', () => {
-  let library: Library;
-  let service: LibraryService;
+describe('Checking Out Devices', () => {
+  let devlab: DevLab;
+  let service: DevLabService;
   let user: User;
 
   beforeEach(() => {
     user = new User('user1', 'John Doe');
-    library = new Library();
-    service = new LibraryService(library);
+    devlab = new DevLab();
+    service = new DevLabService(devlab);
     service.addUser(user);
   });
 
-  it('should allow borrowing a book when user has capacity', () => {
-    const book = new Book('Book 1', 1);
-    service.addBook(book);
+  it('should allow checking out a device when user has capacity', () => {
+    const device = new Device('Device 1', 1);
+    service.addDevice(device);
 
-    const updatedLibrary = service.borrowBook('user1', 'Book 1');
+    const updatedDevLab = service.checkoutDevice('user1', 'Device 1');
 
-    const updatedUser = updatedLibrary.getUser('user1');
-    expect(updatedUser?.borrowedBooks).toContain('Book 1');
-    expect(updatedLibrary.getBooks().find(b => b.title === 'Book 1')).toBeUndefined();
+    const updatedUser = updatedDevLab.getUser('user1');
+    expect(updatedUser?.checkedOutDevices).toContain('Device 1');
+    expect(updatedDevLab.getBooks().find(d => d.name === 'Device 1')).toBeUndefined();
   });
 
-  it('should decrement book copies when multiple copies exist', () => {
-    const book = new Book('Book 1', 2);
-    service.addBook(book);
+  it('should decrement device units when multiple units exist', () => {
+    const device = new Device('Device 1', 2);
+    service.addDevice(device);
 
-    service.borrowBook('user1', 'Book 1');
+    service.checkoutDevice('user1', 'Device 1');
 
-    const remainingBook = service.getCurrentLibrary().findBook('Book 1');
-    expect(remainingBook?.copies).toBe(1);
+    const remainingDevice = service.getCurrentDevLab().findDevice('Device 1');
+    expect(remainingDevice?.units).toBe(1);
   });
 
-  it('should remove book from library when only one copy exists', () => {
-    const book = new Book('Book 1', 1);
-    service.addBook(book);
+  it('should remove device from DevLab when only one unit exists', () => {
+    const device = new Device('Device 1', 1);
+    service.addDevice(device);
 
-    service.borrowBook('user1', 'Book 1');
+    service.checkoutDevice('user1', 'Device 1');
 
-    const remainingBook = service.getCurrentLibrary().findBook('Book 1');
-    expect(remainingBook).toBeUndefined();
+    const remainingDevice = service.getCurrentDevLab().findDevice('Device 1');
+    expect(remainingDevice).toBeUndefined();
   });
 
-  it('should throw BorrowLimitError when user tries to borrow beyond limit', () => {
-    service.addBook(new Book('Book 1', 1));
-    service.addBook(new Book('Book 2', 1));
-    service.addBook(new Book('Book 3', 1));
+  it('should throw CheckoutLimitError when user tries to checkout beyond limit', () => {
+    service.addDevice(new Device('Device 1', 1));
+    service.addDevice(new Device('Device 2', 1));
+    service.addDevice(new Device('Device 3', 1));
 
-    service.borrowBook('user1', 'Book 1');
-    service.borrowBook('user1', 'Book 2');
+    service.checkoutDevice('user1', 'Device 1');
+    service.checkoutDevice('user1', 'Device 2');
 
-    expect(() => service.borrowBook('user1', 'Book 3')).toThrow('User has reached the maximum number of borrowed books');
+    expect(() => service.checkoutDevice('user1', 'Device 3')).toThrow('User has reached the maximum number of checked out devices');
   });
 
-  it('should throw DuplicateBorrowError when user tries to borrow same book twice', () => {
-    const book = new Book('Book 1', 2);
-    service.addBook(book);
+  it('should throw DuplicateCheckoutError when user tries to checkout same device twice', () => {
+    const device = new Device('Device 1', 2);
+    service.addDevice(device);
 
-    service.borrowBook('user1', 'Book 1');
+    service.checkoutDevice('user1', 'Device 1');
 
-    expect(() => service.borrowBook('user1', 'Book 1')).toThrow('User cannot borrow the same book twice');
+    expect(() => service.checkoutDevice('user1', 'Device 1')).toThrow('User cannot checkout the same device twice');
   });
 
   it('should throw error when user not found', () => {
-    service.addBook(new Book('Book 1', 1));
+    service.addDevice(new Device('Device 1', 1));
 
-    expect(() => service.borrowBook('nonexistent', 'Book 1')).toThrow('User not found');
+    expect(() => service.checkoutDevice('nonexistent', 'Device 1')).toThrow('User not found');
   });
 
-  it('should throw error when book not available', () => {
-    expect(() => service.borrowBook('user1', 'Nonexistent Book')).toThrow('Book not available');
+  it('should throw error when device not available', () => {
+    expect(() => service.checkoutDevice('user1', 'Nonexistent Device')).toThrow('Device not available');
   });
 
-  it('should throw error when trying to borrow book with no copies', () => {
-    const book = new Book('Book 1', 0);
-    service.addBook(book);
+  it('should throw error when trying to checkout device with no units', () => {
+    const device = new Device('Device 1', 0);
+    service.addDevice(device);
 
-    expect(() => service.borrowBook('user1', 'Book 1')).toThrow('Book not available');
+    expect(() => service.checkoutDevice('user1', 'Device 1')).toThrow('Device not available');
   });
 });

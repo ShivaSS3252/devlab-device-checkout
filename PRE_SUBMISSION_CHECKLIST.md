@@ -1,6 +1,6 @@
 # ✅ Pre-Submission Checklist
 
-## 📋 Library Management System - Final Verification
+## 📋 DevLab — Test Device Checkout System - Final Verification
 
 **Submission Date**: January 17, 2026
 **Project Status**: ✅ READY FOR SUBMISSION
@@ -9,33 +9,33 @@
 
 ## 🎯 **Assignment Stories Implementation**
 
-### ✅ **Story 1: Viewing Books**
+### ✅ **Story 1: Viewing Devices**
 - **Status**: ✅ **COMPLETED**
-- **Implementation**: `UserDashboard.tsx` displays book grid with availability status
+- **Implementation**: `UserDashboard.tsx` displays device grid with availability status
 - **Admin View**: `AdminDashboard.tsx` with pagination support
 - **Tests**: `tests/viewBooks.test.ts` (2 scenarios) + integration tests
 - **Coverage**: Real-time availability indicators, loading states, error handling
 
-### ✅ **Story 2: Borrowing Books**
+### ✅ **Story 2: Checking Out Devices**
 - **Status**: ✅ **COMPLETED**
-- **Business Rules**: 2-book limit, duplicate prevention, stock management
-- **Validation**: `User.canBorrowMoreBooks()`, `User.hasBorrowedBook()`
-- **Error Handling**: `BorrowLimitError`, `DuplicateBorrowError`
+- **Business Rules**: 2-device limit, duplicate prevention, inventory management
+- **Validation**: `User.canCheckoutMore()`, `User.hasDevice()`
+- **Error Handling**: `CheckoutLimitError`, `DuplicateCheckoutError`
 - **Tests**: `tests/borrowBooks.test.ts` (9 comprehensive scenarios)
-- **UI**: Conditional borrow buttons with real-time limit tracking
+- **UI**: Conditional checkout buttons with real-time limit tracking
 
-### ✅ **Story 3: Returning Books**
+### ✅ **Story 3: Returning Devices**
 - **Status**: ✅ **COMPLETED**
-- **Logic**: `User.returnBook()`, `Library.addBook()` for stock management
-- **Consistency**: Existing books increment count, new books added to inventory
-- **Validation**: User must have borrowed the book to return it
+- **Logic**: `User.returnDevice()`, `DevLab.addDevice()` for inventory management
+- **Consistency**: Existing devices increment unit count, new devices added to inventory
+- **Validation**: User must have checked out the device to return it
 - **Tests**: `tests/returnBooks.test.ts` (6 scenarios) + edge cases
 
 ### ✅ **Story 4: Admin Management**
 - **Status**: ✅ **COMPLETED**
 - **Features**: Inventory management, user activity monitoring, statistics dashboard
-- **Admin Borrowing**: Admin can borrow books with same rules as users
-- **User Tracking**: View all users, borrowing activity, and statistics
+- **Admin Checkout**: Admin can checkout devices with same rules as users
+- **User Tracking**: View all users, checkout activity, and statistics
 - **UI**: Comprehensive admin dashboard with pagination and analytics
 - **Tests**: `tests/adminFunctionality.test.ts` (17 scenarios)
 
@@ -44,23 +44,23 @@
 ## 👨‍💼 **Admin Capabilities Verification**
 
 ### ✅ **Admin Has User Capabilities**
-- **Borrowing**: Admin can borrow books with same 2-book limit
-- **Returning**: Admin can return borrowed books
+- **Checkout**: Admin can checkout devices with same 2-device limit
+- **Return**: Admin can return checked out devices
 - **Validation**: Same business rules apply to admin users
-- **UI**: Admin dashboard includes personal borrowing section
+- **UI**: Admin dashboard includes personal checkout section
 
 ### ✅ **Admin Has Additional Features**
-- **Inventory Management**: Add new books to library
+- **Inventory Management**: Add new devices to DevLab
 - **User Oversight**: View all registered users and their activity
-- **Statistics**: Total books, borrowed books, active users
+- **Statistics**: Total devices, checked out devices, active users
 - **Pagination**: Handle large datasets efficiently
 - **Bulk Operations**: Efficient management interface
 
-### ✅ **Admin Can Track User Borrowings**
-- **User List**: View all registered users with borrowing status
-- **Activity Monitoring**: See which books each user has borrowed
-- **Real-time Updates**: Dashboard reflects current borrowing activity
-- **Statistics**: Active users count, borrowing trends
+### ✅ **Admin Can Track User Checkouts**
+- **User List**: View all registered users with checkout status
+- **Activity Monitoring**: See which devices each user has checked out
+- **Real-time Updates**: Dashboard reflects current checkout activity
+- **Statistics**: Active users count, checkout trends
 
 ---
 
@@ -85,11 +85,11 @@
 ### ✅ **HTTP Error Equivalents Implemented**
 - **400 Bad Request**: Invalid inputs, negative values, malformed data
 - **401 Unauthorized**: Non-existent users, access attempts
-- **403 Forbidden**: Business rule violations, borrowing limits, duplicates
+- **403 Forbidden**: Business rule violations, checkout limits, duplicates
 
 ### ✅ **Error Scenarios Covered**
-- **Domain Errors**: `BorrowLimitError`, `DuplicateBorrowError`
-- **Service Validation**: User existence, book availability
+- **Domain Errors**: `CheckoutLimitError`, `DuplicateCheckoutError`
+- **Service Validation**: User existence, device availability
 - **UI Error Handling**: Toast notifications, loading states
 - **Edge Cases**: Concurrent operations, data consistency
 
@@ -205,7 +205,7 @@
 ### ✅ **ALL REQUIREMENTS MET**
 - [x] All 4 stories fully implemented and tested
 - [x] Admin has user capabilities + comprehensive admin features
-- [x] Admin can track all user borrowing activity
+- [x] Admin can track all user checkout activity
 - [x] README with detailed architectural decisions
 - [x] Error handling for 400/401/403 equivalents implemented
 - [x] Tests cover all stories, edge cases, and error scenarios
@@ -227,7 +227,7 @@
 - Production-ready error handling
 - Full TypeScript type safety
 
-The Library Management System is **fully implemented, thoroughly tested, and ready for evaluation**.
+The DevLab — Test Device Checkout System is **fully implemented, thoroughly tested, and ready for evaluation**.
 
 ---
 

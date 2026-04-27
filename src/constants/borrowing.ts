@@ -1,4 +1,4 @@
-export const MAX_BOOKS_PER_USER = 2;
+export const MAX_DEVICES_PER_USER = 2;
 
 // UI Constants
 export const ITEMS_PER_PAGE = 5;

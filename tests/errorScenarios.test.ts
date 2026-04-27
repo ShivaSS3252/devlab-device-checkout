@@ -1,260 +1,257 @@
-import { Library } from '../src/domain/Library';
-import { Book } from '../src/domain/Book';
+import { DevLab } from '../src/domain/DevLab';
+import { Device } from '../src/domain/Device';
 import { User } from '../src/domain/User';
-import { LibraryService } from '../src/services/LibraryService';
+import { DevLabService } from '../src/services/DevLabService';
 
 describe('Error Scenarios and Edge Cases', () => {
-  let library: Library;
-  let service: LibraryService;
+  let devlab: DevLab;
+  let service: DevLabService;
   let user: User;
 
   beforeEach(() => {
     user = new User('test-user', 'Test User');
-    library = new Library();
-    service = new LibraryService(library);
+    devlab = new DevLab();
+    service = new DevLabService(devlab);
     service.addUser(user);
   });
 
   describe('HTTP-like Error Response Simulation (400 Bad Request)', () => {
-    it('should handle invalid book titles (400 - Bad Request equivalent)', () => {
-      // Empty title
-      expect(() => new Book('', 1)).not.toThrow(); // Domain allows, but service could validate
+    it('should handle invalid device names (400 - Bad Request equivalent)', () => {
+      // Empty name
+      expect(() => new Device('', 1)).not.toThrow();
 
-      // Very long title
-      const longTitle = 'A'.repeat(1000);
-      expect(() => new Book(longTitle, 1)).not.toThrow();
+      // Very long name
+      const longName = 'A'.repeat(1000);
+      expect(() => new Device(longName, 1)).not.toThrow();
 
       // Special characters
-      expect(() => new Book('Book@#$%^&*()', 1)).not.toThrow();
+      expect(() => new Device('Device@#$%^&*()', 1)).not.toThrow();
     });
 
     it('should handle invalid user names (400 - Bad Request equivalent)', () => {
-      expect(() => new User('', 'Test')).not.toThrow(); // Domain allows empty IDs
-      expect(() => new User('user1', '')).not.toThrow(); // Domain allows empty names
+      expect(() => new User('', 'Test')).not.toThrow();
+      expect(() => new User('user1', '')).not.toThrow();
     });
 
-    it('should handle negative book copies (400 - Bad Request equivalent)', () => {
-      const book = new Book('Negative Copies', -1);
-      expect(book.copies).toBe(-1); // Domain doesn't validate, could be service responsibility
+    it('should handle negative device units (400 - Bad Request equivalent)', () => {
+      const device = new Device('Negative Units', -1);
+      expect(device.units).toBe(-1);
 
-      service.addBook(book);
-      expect(() => service.borrowBook('test-user', 'Negative Copies')).toThrow('Book not available');
+      service.addDevice(device);
+      expect(() => service.checkoutDevice('test-user', 'Negative Units')).toThrow('Device not available');
     });
   });
 
   describe('HTTP-like Error Response Simulation (401 Unauthorized)', () => {
     it('should handle unauthorized access attempts (401 equivalent)', () => {
-      service.addBook(new Book('Restricted Book', 1));
+      service.addDevice(new Device('Restricted Device', 1));
 
-      // Try to borrow with non-existent user
-      expect(() => service.borrowBook('unauthorized-user', 'Restricted Book')).toThrow('User not found');
+      // Try to checkout with non-existent user
+      expect(() => service.checkoutDevice('unauthorized-user', 'Restricted Device')).toThrow('User not found');
 
-      // Try to return book for non-existent user
-      expect(() => service.returnBook('unauthorized-user', 'Restricted Book')).toThrow('User not found');
+      // Try to return device for non-existent user
+      expect(() => service.returnDevice('unauthorized-user', 'Restricted Device')).toThrow('User not found');
     });
 
-    it('should prevent access to other users borrowing records (401 equivalent)', () => {
+    it('should prevent access to other users checkout records (401 equivalent)', () => {
       const otherUser = new User('other-user', 'Other User');
       service.addUser(otherUser);
 
-      service.addBook(new Book('Private Book', 1));
-      service.borrowBook('other-user', 'Private Book');
+      service.addDevice(new Device('Private Device', 1));
+      service.checkoutDevice('other-user', 'Private Device');
 
-      // Current user shouldn't be able to see/access other user's borrowed books directly
-      // This is tested through the service interface - users can only access their own data
-      const currentLibrary = service.getCurrentLibrary();
-      const otherUserRecord = currentLibrary.getUser('other-user');
+      // Current user shouldn't be able to see/access other user's checked out devices directly
+      const currentDevLab = service.getCurrentDevLab();
+      const otherUserRecord = currentDevLab.getUser('other-user');
 
-      // The service doesn't expose methods to access other users' private data
-      expect(otherUserRecord?.borrowedBooks).toContain('Private Book');
+      expect(otherUserRecord?.checkedOutDevices).toContain('Private Device');
     });
   });
 
   describe('HTTP-like Error Response Simulation (403 Forbidden)', () => {
-    it('should enforce borrowing limits (403 - Forbidden equivalent)', () => {
-      service.addBook(new Book('Book 1', 1));
-      service.addBook(new Book('Book 2', 1));
-      service.addBook(new Book('Forbidden Book', 1));
+    it('should enforce checkout limits (403 - Forbidden equivalent)', () => {
+      service.addDevice(new Device('Device 1', 1));
+      service.addDevice(new Device('Device 2', 1));
+      service.addDevice(new Device('Forbidden Device', 1));
 
-      // User borrows up to limit
-      service.borrowBook('test-user', 'Book 1');
-      service.borrowBook('test-user', 'Book 2');
+      // User checks out up to limit
+      service.checkoutDevice('test-user', 'Device 1');
+      service.checkoutDevice('test-user', 'Device 2');
 
-      // Third borrow should be forbidden (equivalent to 403)
-      expect(() => service.borrowBook('test-user', 'Forbidden Book')).toThrow('User has reached the maximum number of borrowed books');
+      // Third checkout should be forbidden (equivalent to 403)
+      expect(() => service.checkoutDevice('test-user', 'Forbidden Device')).toThrow('User has reached the maximum number of checked out devices');
     });
 
-    it('should prevent duplicate borrowing (403 - Forbidden equivalent)', () => {
-      const book = new Book('Duplicate Book', 2);
-      service.addBook(book);
+    it('should prevent duplicate checkout (403 - Forbidden equivalent)', () => {
+      const device = new Device('Duplicate Device', 2);
+      service.addDevice(device);
 
-      service.borrowBook('test-user', 'Duplicate Book');
+      service.checkoutDevice('test-user', 'Duplicate Device');
 
-      // Second borrow of same book should be forbidden
-      expect(() => service.borrowBook('test-user', 'Duplicate Book')).toThrow('User cannot borrow the same book twice');
+      // Second checkout of same device should be forbidden
+      expect(() => service.checkoutDevice('test-user', 'Duplicate Device')).toThrow('User cannot checkout the same device twice');
     });
 
-    it('should prevent borrowing out-of-stock books (403 - Forbidden equivalent)', () => {
-      const book = new Book('Out of Stock', 0);
-      service.addBook(book);
+    it('should prevent checking out out-of-stock devices (403 - Forbidden equivalent)', () => {
+      const device = new Device('Out of Stock', 0);
+      service.addDevice(device);
 
-      expect(() => service.borrowBook('test-user', 'Out of Stock')).toThrow('Book not available');
+      expect(() => service.checkoutDevice('test-user', 'Out of Stock')).toThrow('Device not available');
     });
   });
 
   describe('Critical Edge Cases', () => {
-    it('should handle concurrent operations on same book', () => {
-      // This simulates what would happen if two users try to borrow the last copy
-      const book = new Book('Last Copy', 1);
-      service.addBook(book);
+    it('should handle concurrent operations on same device', () => {
+      const device = new Device('Last Unit', 1);
+      service.addDevice(device);
 
       const user2 = new User('user2', 'User 2');
       service.addUser(user2);
 
-      // First user borrows successfully
-      service.borrowBook('test-user', 'Last Copy');
+      // First user checks out successfully
+      service.checkoutDevice('test-user', 'Last Unit');
 
       // Second user should fail
-      expect(() => service.borrowBook('user2', 'Last Copy')).toThrow('Book not available');
+      expect(() => service.checkoutDevice('user2', 'Last Unit')).toThrow('Device not available');
     });
 
-    it('should handle return of book not in user possession', () => {
-      service.addBook(new Book('Unborrowed Book', 1));
+    it('should handle return of device not in user possession', () => {
+      service.addDevice(new Device('Unchecked Device', 1));
 
-      expect(() => service.returnBook('test-user', 'Unborrowed Book')).toThrow('Book not borrowed by user');
+      expect(() => service.returnDevice('test-user', 'Unchecked Device')).toThrow('Device not checked out by user');
     });
 
-    it('should handle maximum integer values for book copies', () => {
-      const book = new Book('Many Copies', Number.MAX_SAFE_INTEGER);
-      service.addBook(book);
+    it('should handle maximum integer values for device units', () => {
+      const device = new Device('Many Units', Number.MAX_SAFE_INTEGER);
+      service.addDevice(device);
 
-      service.borrowBook('test-user', 'Many Copies');
+      service.checkoutDevice('test-user', 'Many Units');
 
-      const remainingBook = service.getCurrentLibrary().findBook('Many Copies');
-      expect(remainingBook?.copies).toBe(Number.MAX_SAFE_INTEGER - 1);
+      const remainingDevice = service.getCurrentDevLab().findDevice('Many Units');
+      expect(remainingDevice?.units).toBe(Number.MAX_SAFE_INTEGER - 1);
     });
 
-    it('should handle zero book copies edge case', () => {
-      const book = new Book('Zero Copies', 0);
-      service.addBook(book);
+    it('should handle zero device units edge case', () => {
+      const device = new Device('Zero Units', 0);
+      service.addDevice(device);
 
-      const foundBook = service.getCurrentLibrary().findBook('Zero Copies');
-      expect(foundBook?.copies).toBe(0);
-      expect(foundBook?.hasCopies()).toBe(false);
+      const foundDevice = service.getCurrentDevLab().findDevice('Zero Units');
+      expect(foundDevice?.units).toBe(0);
+      expect(foundDevice?.hasCopies()).toBe(false);
     });
 
-    it('should handle empty string book titles', () => {
-      const book = new Book('', 1);
-      service.addBook(book);
+    it('should handle empty string device names', () => {
+      const device = new Device('', 1);
+      service.addDevice(device);
 
-      const foundBook = service.getCurrentLibrary().findBook('');
-      expect(foundBook?.title).toBe('');
-      expect(foundBook?.copies).toBe(1);
+      const foundDevice = service.getCurrentDevLab().findDevice('');
+      expect(foundDevice?.name).toBe('');
+      expect(foundDevice?.units).toBe(1);
     });
 
-    it('should handle special characters in book titles', () => {
-      const specialTitle = 'Book@#$%^&*()_+{}|:<>?[]\\;\'",./';
-      const book = new Book(specialTitle, 1);
-      service.addBook(book);
+    it('should handle special characters in device names', () => {
+      const specialName = 'Device@#$%^&*()_+{}|:<>?[]\\;\'",./';
+      const device = new Device(specialName, 1);
+      service.addDevice(device);
 
-      const foundBook = service.getCurrentLibrary().findBook(specialTitle);
-      expect(foundBook?.title).toBe(specialTitle);
+      const foundDevice = service.getCurrentDevLab().findDevice(specialName);
+      expect(foundDevice?.name).toBe(specialName);
     });
   });
 
   describe('Data Integrity Edge Cases', () => {
     it('should maintain data consistency after multiple operations', () => {
-      service.addBook(new Book('Test Book 1', 2));
-      service.addBook(new Book('Test Book 2', 1));
+      service.addDevice(new Device('Test Device 1', 2));
+      service.addDevice(new Device('Test Device 2', 1));
 
-      // Borrow two different books
-      service.borrowBook('test-user', 'Test Book 1');
-      service.borrowBook('test-user', 'Test Book 2');
+      // Checkout two different devices
+      service.checkoutDevice('test-user', 'Test Device 1');
+      service.checkoutDevice('test-user', 'Test Device 2');
 
-      let user = service.getCurrentLibrary().getUser('test-user');
-      expect(user?.borrowedBooks).toHaveLength(2);
-      expect(user?.borrowedBooks).toContain('Test Book 1');
-      expect(user?.borrowedBooks).toContain('Test Book 2');
+      let user = service.getCurrentDevLab().getUser('test-user');
+      expect(user?.checkedOutDevices).toHaveLength(2);
+      expect(user?.checkedOutDevices).toContain('Test Device 1');
+      expect(user?.checkedOutDevices).toContain('Test Device 2');
 
-      let remainingBook1 = service.getCurrentLibrary().findBook('Test Book 1');
-      expect(remainingBook1?.copies).toBe(1);
+      let remainingDevice1 = service.getCurrentDevLab().findDevice('Test Device 1');
+      expect(remainingDevice1?.units).toBe(1);
 
-      // Return one book
-      service.returnBook('test-user', 'Test Book 1');
+      // Return one device
+      service.returnDevice('test-user', 'Test Device 1');
 
-      user = service.getCurrentLibrary().getUser('test-user');
-      expect(user?.borrowedBooks).toHaveLength(1);
-      expect(user?.borrowedBooks).toContain('Test Book 2');
+      user = service.getCurrentDevLab().getUser('test-user');
+      expect(user?.checkedOutDevices).toHaveLength(1);
+      expect(user?.checkedOutDevices).toContain('Test Device 2');
 
-      remainingBook1 = service.getCurrentLibrary().findBook('Test Book 1');
-      expect(remainingBook1?.copies).toBe(2); // Back to original count
+      remainingDevice1 = service.getCurrentDevLab().findDevice('Test Device 1');
+      expect(remainingDevice1?.units).toBe(2); // Back to original count
     });
 
-    it('should handle user with corrupted borrowed books array', () => {
-      // Manually create a user with corrupted data (this wouldn't happen in real usage)
+    it('should handle user with corrupted checked out devices array', () => {
+      // Manually create a user with corrupted data
       const corruptedUser = new User('corrupted', 'Corrupted User');
-      corruptedUser.borrowedBooks.push('Non-existent Book');
+      corruptedUser.checkedOutDevices.push('Non-existent Device');
       service.addUser(corruptedUser);
 
       // Operations should still work normally for this user
-      service.addBook(new Book('Real Book', 1));
-      service.borrowBook('corrupted', 'Real Book');
+      service.addDevice(new Device('Real Device', 1));
+      service.checkoutDevice('corrupted', 'Real Device');
 
-      const updatedUser = service.getCurrentLibrary().getUser('corrupted');
-      expect(updatedUser?.borrowedBooks).toContain('Real Book');
-      expect(updatedUser?.borrowedBooks).toContain('Non-existent Book'); // Corrupted data remains
+      const updatedUser = service.getCurrentDevLab().getUser('corrupted');
+      expect(updatedUser?.checkedOutDevices).toContain('Real Device');
+      expect(updatedUser?.checkedOutDevices).toContain('Non-existent Device'); // Corrupted data remains
     });
 
-    it('should handle books with same title but different instances', () => {
-      // Create two separate book instances with same title
-      const book1 = new Book('Same Title', 1);
-      const book2 = new Book('Same Title', 1);
+    it('should handle devices with same name but different instances', () => {
+      // Create two separate device instances with same name
+      const device1 = new Device('Same Model', 1);
+      const device2 = new Device('Same Model', 1);
 
-      service.addBook(book1);
-      service.addBook(book2); // This should increment the existing book's copies
+      service.addDevice(device1);
+      service.addDevice(device2); // This should increment the existing device's units
 
-      const books = service.getCurrentLibrary().getBooks();
-      const sameTitleBooks = books.filter(b => b.title === 'Same Title');
-      expect(sameTitleBooks).toHaveLength(1);
-      expect(sameTitleBooks[0].copies).toBe(2);
+      const devices = service.getCurrentDevLab().getBooks();
+      const sameModelDevices = devices.filter(d => d.name === 'Same Model');
+      expect(sameModelDevices).toHaveLength(1);
+      expect(sameModelDevices[0].units).toBe(2);
     });
   });
 
   describe('Boundary Conditions', () => {
-    it('should handle exactly 2 books borrowed (at limit)', () => {
-      service.addBook(new Book('Book 1', 1));
-      service.addBook(new Book('Book 2', 1));
+    it('should handle exactly 2 devices checked out (at limit)', () => {
+      service.addDevice(new Device('Device 1', 1));
+      service.addDevice(new Device('Device 2', 1));
 
-      service.borrowBook('test-user', 'Book 1');
-      service.borrowBook('test-user', 'Book 2');
+      service.checkoutDevice('test-user', 'Device 1');
+      service.checkoutDevice('test-user', 'Device 2');
 
-      const user = service.getCurrentLibrary().getUser('test-user');
-      expect(user?.canBorrowMoreBooks()).toBe(false);
-      expect(user?.borrowedBooks).toHaveLength(2);
+      const user = service.getCurrentDevLab().getUser('test-user');
+      expect(user?.canCheckoutMore()).toBe(false);
+      expect(user?.checkedOutDevices).toHaveLength(2);
     });
 
-    it('should handle borrowing after returning to go below limit', () => {
-      service.addBook(new Book('Book 1', 1));
-      service.addBook(new Book('Book 2', 1));
-      service.addBook(new Book('Book 3', 1));
+    it('should handle checkout after returning to go below limit', () => {
+      service.addDevice(new Device('Device 1', 1));
+      service.addDevice(new Device('Device 2', 1));
+      service.addDevice(new Device('Device 3', 1));
 
       // Reach limit
-      service.borrowBook('test-user', 'Book 1');
-      service.borrowBook('test-user', 'Book 2');
+      service.checkoutDevice('test-user', 'Device 1');
+      service.checkoutDevice('test-user', 'Device 2');
 
       // Should fail
-      expect(() => service.borrowBook('test-user', 'Book 3')).toThrow('User has reached the maximum number of borrowed books');
+      expect(() => service.checkoutDevice('test-user', 'Device 3')).toThrow('User has reached the maximum number of checked out devices');
 
-      // Return one book
-      service.returnBook('test-user', 'Book 1');
+      // Return one device
+      service.returnDevice('test-user', 'Device 1');
 
       // Should now succeed
-      service.borrowBook('test-user', 'Book 3');
+      service.checkoutDevice('test-user', 'Device 3');
 
-      const user = service.getCurrentLibrary().getUser('test-user');
-      expect(user?.borrowedBooks).toHaveLength(2);
-      expect(user?.borrowedBooks).toContain('Book 2');
-      expect(user?.borrowedBooks).toContain('Book 3');
+      const user = service.getCurrentDevLab().getUser('test-user');
+      expect(user?.checkedOutDevices).toHaveLength(2);
+      expect(user?.checkedOutDevices).toContain('Device 2');
+      expect(user?.checkedOutDevices).toContain('Device 3');
     });
   });
 });

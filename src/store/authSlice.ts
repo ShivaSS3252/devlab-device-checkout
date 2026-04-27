@@ -24,7 +24,7 @@ export const loginAsync = createAsyncThunk(
     const token = await authService.login(credentials);
     // Find the domain user that matches the auth user
     const state = getState() as RootState;
-    const domainUser = state.library.users.find((u: DomainUser) => u.id === token.user.id);
+    const domainUser = state.devlab.users.find((u: DomainUser) => u.id === token.user.id);
     if (domainUser) {
       dispatch(setCurrentUser(domainUser));
     }

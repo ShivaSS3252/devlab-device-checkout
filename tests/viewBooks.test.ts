@@ -1,37 +1,37 @@
-import { Library } from '../src/domain/Library';
-import { Book } from '../src/domain/Book';
-import { LibraryService } from '../src/services/LibraryService';
+import { DevLab } from '../src/domain/DevLab';
+import { Device } from '../src/domain/Device';
+import { DevLabService } from '../src/services/DevLabService';
 
-describe('Viewing Books', () => {
-  it('should return empty list when library has no books', () => {
-    const library = new Library();
-    const service = new LibraryService(library);
+describe('Viewing Devices', () => {
+  it('should return empty list when DevLab has no devices', () => {
+    const devlab = new DevLab();
+    const service = new DevLabService(devlab);
 
-    const books = service.viewBooks();
+    const devices = service.viewDevices();
 
-    expect(books).toEqual([]);
+    expect(devices).toEqual([]);
   });
 
-  it('should return list of books when library has books', () => {
-    const book1 = new Book('Book 1', 1);
-    const book2 = new Book('Book 2', 2);
-    const library = new Library([book1, book2]);
-    const service = new LibraryService(library);
+  it('should return list of devices when DevLab has devices', () => {
+    const device1 = new Device('Device 1', 1);
+    const device2 = new Device('Device 2', 2);
+    const devlab = new DevLab([device1, device2]);
+    const service = new DevLabService(devlab);
 
-    const books = service.viewBooks();
+    const devices = service.viewDevices();
 
-    expect(books).toEqual([book1, book2]);
+    expect(devices).toEqual([device1, device2]);
   });
 
   it('should return readonly array type for immutability contract', () => {
-    const library = new Library([new Book('Book 1')]);
-    const service = new LibraryService(library);
+    const devlab = new DevLab([new Device('Device 1')]);
+    const service = new DevLabService(devlab);
 
-    const books = service.viewBooks();
+    const devices = service.viewDevices();
 
     // TypeScript ensures this is readonly at compile time
     // Runtime mutation is prevented by the readonly modifier
-    expect(books).toBeDefined();
-    expect(books.length).toBe(1);
+    expect(devices).toBeDefined();
+    expect(devices.length).toBe(1);
   });
 });

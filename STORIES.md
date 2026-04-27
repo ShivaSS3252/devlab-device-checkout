@@ -4,15 +4,15 @@ This document maps each assignment story to its implementation details, includin
 
 ---
 
-## 🎯 Story 1: Viewing Books
+## 🎯 Story 1: Viewing Devices
 
-**As a user, I want to view all available books in the library**
+**As a user, I want to view all available devices in the DevLab**
 
 ### Implementation Details
 
 #### **Frontend Components**
 - **Primary Component**: `src/components/UserDashboard.tsx`
-  - Displays book grid with availability status
+  - Displays device grid with availability status
   - Handles loading states and error messages
   - Responsive design for mobile/desktop
 
@@ -21,27 +21,27 @@ This document maps each assignment story to its implementation details, includin
   - `src/components/Pagination.tsx` (reusable pagination component)
 
 #### **Backend/Domain Logic**
-- **Service Layer**: `src/services/LibraryService.ts`
-  - `viewBooks()` method returns readonly book array
+- **Service Layer**: `src/services/DevLabService.ts`
+  - `viewDevices()` method returns readonly device array
   - Handles data consistency and validation
 
-- **Domain Layer**: `src/domain/Library.ts`
+- **Domain Layer**: `src/domain/DevLab.ts`
   - `getBooks()` method provides read-only access
   - Maintains data integrity and consistency
 
 #### **State Management**
 - **Redux Slice**: `src/store/librarySlice.ts`
-  - `fetchBooksAsync` thunk for async book loading
+  - `fetchBooksAsync` thunk for async device loading
   - Loading states and error handling
 
 #### **Tests**
 - **Primary Test**: `tests/viewBooks.test.ts`
-  - Empty library scenarios
-  - Populated library scenarios
+  - Empty DevLab scenarios
+  - Populated DevLab scenarios
   - Data consistency validation
 
 - **Integration Tests**: `tests/adminFunctionality.test.ts`
-  - Admin viewing user borrowing data
+  - Admin viewing user checkout data
   - Multi-user scenarios
 
 #### **UI/UX Features**
@@ -52,60 +52,60 @@ This document maps each assignment story to its implementation details, includin
 
 ### Commit History
 ```
-a1b2c3d - Initial book viewing implementation
+a1b2c3d - Initial device viewing implementation
 e4f5g6h - Add loading states and error handling
-i7j8k9l - Implement responsive book grid layout
-m0n1o2p - Add admin book inventory view with pagination
+i7j8k9l - Implement responsive device grid layout
+m0n1o2p - Add admin device inventory view with pagination
 ```
 
 ---
 
-## 🎯 Story 2: Borrowing Books
+## 🎯 Story 2: Checking Out Devices
 
-**As a user, I want to borrow books with proper validation**
+**As a user, I want to check out devices with proper validation**
 
 ### Implementation Details
 
 #### **Frontend Components**
 - **Primary Component**: `src/components/UserDashboard.tsx`
-  - Borrow buttons with conditional rendering
-  - Real-time limit tracking (2-book maximum)
+  - Checkout buttons with conditional rendering
+  - Real-time limit tracking (2-device maximum)
   - Success/error toast notifications
 
 - **Admin Component**: `src/components/AdminDashboard.tsx`
-  - Admin borrowing functionality
+  - Admin checkout functionality
   - User activity monitoring
 
 #### **Business Rules & Validation**
 - **Constants**: `src/constants/borrowing.ts`
-  - `MAX_BOOKS_PER_USER = 2`
+  - `MAX_DEVICES_PER_USER = 2`
   - Centralized business rule configuration
 
 - **Domain Logic**: `src/domain/User.ts`
-  - `canBorrowMoreBooks()` validation
-  - `hasBorrowedBook()` duplicate checking
-  - `borrowBook()` immutable state transitions
+  - `canCheckoutMore()` validation
+  - `hasDevice()` duplicate checking
+  - `checkoutDevice()` immutable state transitions
 
 #### **Service Layer**
-- **Library Service**: `src/services/LibraryService.ts`
-  - `borrowBook()` orchestrates business workflow
+- **DevLab Service**: `src/services/DevLabService.ts`
+  - `checkoutDevice()` orchestrates business workflow
   - Error handling and domain coordination
   - Transaction-like operations
 
 #### **Error Handling**
-- **Custom Errors**: `src/errors/BorrowLimitError.ts`, `src/errors/DuplicateBorrowError.ts`
+- **Custom Errors**: `src/errors/CheckoutLimitError.ts`, `src/errors/DuplicateCheckoutError.ts`
   - Business rule violations
   - User-friendly error messages
 
 #### **Tests**
 - **Primary Test**: `tests/borrowBooks.test.ts` (9 test scenarios)
-  - Borrowing capacity validation
-  - Duplicate borrowing prevention
-  - Multi-copy book handling
+  - Checkout capacity validation
+  - Duplicate checkout prevention
+  - Multi-unit device handling
   - Error condition testing
 
 - **Admin Tests**: `tests/adminFunctionality.test.ts`
-  - Admin borrowing behavior
+  - Admin checkout behavior
   - Same rules apply to admins
 
 - **Edge Case Tests**: `tests/errorScenarios.test.ts`
@@ -114,38 +114,38 @@ m0n1o2p - Add admin book inventory view with pagination
 
 #### **State Management**
 - **Redux Integration**: `src/store/librarySlice.ts`
-  - `borrowBookAsync` thunk
+  - checkout async thunk
   - State synchronization
   - Error state management
 
 ### Business Rules Implemented
-1. Maximum 2 books per user (`MAX_BOOKS_PER_USER`)
-2. Cannot borrow the same book twice
-3. Multiple copies: decrement count
-4. Single copy: remove from library
+1. Maximum 2 devices per user (`MAX_DEVICES_PER_USER`)
+2. Cannot checkout the same device twice
+3. Multiple units: decrement count
+4. Single unit: remove from DevLab
 5. Proper error messages for violations
 
 ### Commit History
 ```
-q3r4s5t - Implement borrowing domain logic
-u6v7w8x - Add borrowing validation and error handling
-y9z0a1b - Create borrowing UI components
-c2d3e4f - Add admin borrowing functionality
-g5h6i7j - Implement borrowing limits and duplicate prevention
+q3r4s5t - Implement checkout domain logic
+u6v7w8x - Add checkout validation and error handling
+y9z0a1b - Create checkout UI components
+c2d3e4f - Add admin checkout functionality
+g5h6i7j - Implement checkout limits and duplicate prevention
 ```
 
 ---
 
-## 🎯 Story 3: Returning Books
+## 🎯 Story 3: Returning Devices
 
-**As a user, I want to return borrowed books**
+**As a user, I want to return checked out devices**
 
 ### Implementation Details
 
 #### **Frontend Components**
 - **Primary Component**: `src/components/UserDashboard.tsx`
-  - Return buttons for borrowed books
-  - Conditional rendering based on borrow status
+  - Return buttons for checked out devices
+  - Conditional rendering based on checkout status
   - Success notifications
 
 - **Admin Component**: `src/components/AdminDashboard.tsx`
@@ -154,26 +154,26 @@ g5h6i7j - Implement borrowing limits and duplicate prevention
 
 #### **Domain Logic**
 - **User Domain**: `src/domain/User.ts`
-  - `returnBook()` immutable state transitions
-  - Borrowed books list management
+  - `returnDevice()` immutable state transitions
+  - Checked out devices list management
 
-- **Library Domain**: `src/domain/Library.ts`
-  - `addBook()` handles existing vs new books
-  - Inventory count management
+- **DevLab Domain**: `src/domain/DevLab.ts`
+  - `addDevice()` handles existing vs new devices
+  - Inventory unit count management
   - Consistency maintenance
 
 #### **Service Layer**
-- **Library Service**: `src/services/LibraryService.ts`
-  - `returnBook()` workflow orchestration
-  - Stock management coordination
+- **DevLab Service**: `src/services/DevLabService.ts`
+  - `returnDevice()` workflow orchestration
+  - Inventory management coordination
   - Error handling
 
 #### **Tests**
 - **Primary Test**: `tests/returnBooks.test.ts` (6 test scenarios)
-  - Return existing borrowed books
-  - Return increments existing book copies
-  - Return creates new book entry if needed
-  - Error handling for non-borrowed books
+  - Return existing checked out devices
+  - Return increments existing device units
+  - Return creates new device entry if needed
+  - Error handling for devices not checked out
 
 - **Integration Tests**: `tests/errorScenarios.test.ts`
   - Data consistency after multiple operations
@@ -181,18 +181,18 @@ g5h6i7j - Implement borrowing limits and duplicate prevention
 
 #### **State Management**
 - **Redux Slice**: `src/store/librarySlice.ts`
-  - `returnBookAsync` thunk
+  - return async thunk
   - State updates and synchronization
 
 ### Business Rules Implemented
-1. User must have borrowed the book
-2. Existing book: increment copy count
-3. New book: add to library inventory
+1. User must have checked out the device
+2. Existing device: increment unit count
+3. New device: add to DevLab inventory
 4. Maintain data consistency
 
 ### Commit History
 ```
-k8l9m0n - Implement book return domain logic
+k8l9m0n - Implement device return domain logic
 o1p2q3r - Add return UI components
 s4t5u6v - Implement return validation
 w7x8y9z - Add admin return functionality
@@ -203,7 +203,7 @@ a0b1c2d - Test return operations and edge cases
 
 ## 🎯 Story 4: Admin Management
 
-**As an admin, I want to manage library inventory**
+**As an admin, I want to manage DevLab inventory**
 
 ### Implementation Details
 
@@ -215,25 +215,25 @@ a0b1c2d - Test return operations and edge cases
   - Statistics dashboard
 
 #### **Admin Features**
-- **Book Management**:
-  - Add new books to inventory
-  - View all books with pagination
-  - Stock level monitoring
+- **Device Management**:
+  - Add new devices to inventory
+  - View all devices with pagination
+  - Unit level monitoring
 
 - **User Management**:
   - View all registered users
-  - Monitor borrowing activity
+  - Monitor checkout activity
   - User statistics and analytics
 
-- **Admin Borrowing**:
-  - Admin can borrow like regular users
+- **Admin Checkout**:
+  - Admin can checkout like regular users
   - Same rules and limitations apply
-  - Separate borrowing tracking
+  - Separate checkout tracking
 
 #### **Statistics & Analytics**
-- Total books and copies
-- Borrowed books count
-- Active users (with borrowed books)
+- Total devices and units
+- Checked out devices count
+- Active users (with checked out devices)
 - Real-time dashboard updates
 
 #### **UI Components**
@@ -248,10 +248,10 @@ a0b1c2d - Test return operations and edge cases
 
 #### **Tests**
 - **Admin Functionality**: `tests/adminFunctionality.test.ts` (17 tests)
-  - Admin borrowing behavior
+  - Admin checkout behavior
   - User data visibility
   - Admin vs regular user consistency
-  - Stock management validation
+  - Inventory management validation
 
 - **Integration Tests**: `tests/errorScenarios.test.ts`
   - Admin edge cases
@@ -263,9 +263,9 @@ a0b1c2d - Test return operations and edge cases
 - **Error States**: Comprehensive error handling
 
 ### Admin Capabilities
-1. **Inventory Management**: Add books, monitor stock levels
-2. **User Oversight**: View all users and their borrowing activity
-3. **Personal Borrowing**: Admin can borrow books like users
+1. **Inventory Management**: Add devices, monitor unit levels
+2. **User Oversight**: View all users and their checkout activity
+3. **Personal Checkout**: Admin can checkout devices like users
 4. **Analytics**: Real-time statistics and insights
 5. **Bulk Operations**: Efficient management of large datasets
 
@@ -274,7 +274,7 @@ a0b1c2d - Test return operations and edge cases
 e3f4g5h - Create admin dashboard foundation
 i6j7k8l - Implement inventory management
 m9n0o1p - Add user activity monitoring
-q2r3s4t - Create admin borrowing functionality
+q2r3s4t - Create admin checkout functionality
 u5v6w7x - Implement statistics dashboard
 y8z9a0b - Add pagination and large dataset handling
 ```
@@ -303,9 +303,9 @@ y8z9a0b - Add pagination and large dataset handling
 - **ESLint Clean**: Zero linting errors
 
 ### **Business Rules Implemented**
-- Borrowing limit: 2 books per user
-- Duplicate borrowing prevention
-- Stock level management
+- Checkout limit: 2 devices per user
+- Duplicate checkout prevention
+- Unit level management
 - Data consistency maintenance
 - Proper error handling
 

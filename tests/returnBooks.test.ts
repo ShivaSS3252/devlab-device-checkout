@@ -1,76 +1,75 @@
-import { Library } from '../src/domain/Library';
-import { Book } from '../src/domain/Book';
+import { DevLab } from '../src/domain/DevLab';
+import { Device } from '../src/domain/Device';
 import { User } from '../src/domain/User';
-import { LibraryService } from '../src/services/LibraryService';
+import { DevLabService } from '../src/services/DevLabService';
 
-describe('Returning Books', () => {
-  let library: Library;
-  let service: LibraryService;
+describe('Returning Devices', () => {
+  let devlab: DevLab;
+  let service: DevLabService;
   let user: User;
 
   beforeEach(() => {
     user = new User('user1', 'John Doe');
-    library = new Library();
-    service = new LibraryService(library);
+    devlab = new DevLab();
+    service = new DevLabService(devlab);
     service.addUser(user);
   });
 
-  it('should allow returning a borrowed book', () => {
-    const book = new Book('Book 1', 1);
-    service.addBook(book);
-    service.borrowBook('user1', 'Book 1');
+  it('should allow returning a checked out device', () => {
+    const device = new Device('Device 1', 1);
+    service.addDevice(device);
+    service.checkoutDevice('user1', 'Device 1');
 
-    const updatedLibrary = service.returnBook('user1', 'Book 1');
+    const updatedDevLab = service.returnDevice('user1', 'Device 1');
 
-    const updatedUser = updatedLibrary.getUser('user1');
-    expect(updatedUser?.borrowedBooks).not.toContain('Book 1');
-    expect(updatedLibrary.findBook('Book 1')).toBeDefined();
+    const updatedUser = updatedDevLab.getUser('user1');
+    expect(updatedUser?.checkedOutDevices).not.toContain('Device 1');
+    expect(updatedDevLab.findDevice('Device 1')).toBeDefined();
   });
 
-  it('should increment book copies when returning to existing book', () => {
-    const originalBook = new Book('Book 1', 2);
-    service.addBook(originalBook);
-    service.borrowBook('user1', 'Book 1'); // Now 1 copy left
+  it('should increment device units when returning to existing inventory', () => {
+    const originalDevice = new Device('Device 1', 2);
+    service.addDevice(originalDevice);
+    service.checkoutDevice('user1', 'Device 1'); // Now 1 unit left
 
-    service.returnBook('user1', 'Book 1');
+    service.returnDevice('user1', 'Device 1');
 
-    const returnedBook = service.getCurrentLibrary().findBook('Book 1');
-    expect(returnedBook?.copies).toBe(2);
+    const returnedDevice = service.getCurrentDevLab().findDevice('Device 1');
+    expect(returnedDevice?.units).toBe(2);
   });
 
-  it('should add new book entry when returning book not in library', () => {
-    // User borrows a book, then library somehow loses the record
-    // Simulate by manually setting user's borrowed books
-    const userWithBorrowedBook = new User('user1', 'John Doe', ['Book 1']);
-    library = new Library([], [userWithBorrowedBook]);
-    service = new LibraryService(library);
+  it('should add new device entry when returning device not in inventory', () => {
+    // User has a device but inventory has no record (edge case)
+    const userWithDevice = new User('user1', 'John Doe', ['Device 1']);
+    devlab = new DevLab([], [userWithDevice]);
+    service = new DevLabService(devlab);
 
-    service.returnBook('user1', 'Book 1');
+    service.returnDevice('user1', 'Device 1');
 
-    const returnedBook = service.getCurrentLibrary().findBook('Book 1');
-    expect(returnedBook?.copies).toBe(1);
+    const returnedDevice = service.getCurrentDevLab().findDevice('Device 1');
+    expect(returnedDevice?.units).toBe(1);
   });
 
   it('should throw error when user not found', () => {
-    expect(() => service.returnBook('nonexistent', 'Book 1')).toThrow('User not found');
+    expect(() => service.returnDevice('nonexistent', 'Device 1')).toThrow('User not found');
   });
 
-  it('should throw error when user tries to return book they did not borrow', () => {
-    expect(() => service.returnBook('user1', 'Book 1')).toThrow('Book not borrowed by user');
+  it('should throw error when user tries to return device they did not checkout', () => {
+    expect(() => service.returnDevice('user1', 'Device 1')).toThrow('Device not checked out by user');
   });
 
-  it('should handle returning one book while user has multiple borrowed books', () => {
-    service.addBook(new Book('Book 1', 1));
-    service.addBook(new Book('Book 2', 1));
+  it('should handle returning one device while user has multiple checked out', () => {
+    service.addDevice(new Device('Device 1', 1));
+    service.addDevice(new Device('Device 2', 1));
 
-    service.borrowBook('user1', 'Book 1');
-    service.borrowBook('user1', 'Book 2');
+    service.checkoutDevice('user1', 'Device 1');
+    service.checkoutDevice('user1', 'Device 2');
 
-    service.returnBook('user1', 'Book 1');
+    service.returnDevice('user1', 'Device 1');
 
-    const updatedUser = service.getCurrentLibrary().getUser('user1');
-    expect(updatedUser?.borrowedBooks).toEqual(['Book 2']);
-    expect(service.getCurrentLibrary().findBook('Book 1')).toBeDefined();
-    expect(service.getCurrentLibrary().findBook('Book 2')).toBeUndefined();
+    const updatedUser = service.getCurrentDevLab().getUser('user1');
+    expect(updatedUser?.checkedOutDevices).toEqual(['Device 2']);
+    expect(service.getCurrentDevLab().findDevice('Device 1')).toBeDefined();
+    expect(service.getCurrentDevLab().findDevice('Device 2')).toBeUndefined();
   });
 });

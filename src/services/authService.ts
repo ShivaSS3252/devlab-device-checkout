@@ -28,7 +28,7 @@ const MOCK_USERS: Record<string, User> = {
   'admin1': {
     id: 'admin1',
     name: 'Admin User',
-    email: 'admin@library.com',
+    email: 'admin@devlab.com',
     role: 'admin' as UserRole,
     avatar: 'https://via.placeholder.com/40'
   }

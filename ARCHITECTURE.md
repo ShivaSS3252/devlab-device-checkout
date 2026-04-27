@@ -1,6 +1,6 @@
 # 🏗️ Architecture & SOLID Principles Documentation
 
-This document explains how the Library Management System follows SOLID principles and clean architecture patterns.
+This document explains how the DevLab — Test Device Checkout System follows SOLID principles and clean architecture patterns.
 
 ## 📋 Table of Contents
 
@@ -23,45 +23,45 @@ Each class and module has **one reason to change** and **one primary responsibil
 
 #### Domain Layer - Single Responsibilities
 
-**`Book` Class** (`src/domain/Book.ts`)
+**`Device` Class** (`src/domain/Device.ts`)
 ```typescript
-export class Book {
-  // ✅ Single Responsibility: Manages book state and copy operations
-  constructor(public title: string, public copies: number = 1) {}
+export class Device {
+  // ✅ Single Responsibility: Manages device state and unit operations
+  constructor(public name: string, public units: number = 1) {}
 
   hasCopies(): boolean { /* ... */ }          // Check availability
-  decrementCopies(): Book { /* ... */ }      // Handle borrowing
-  incrementCopies(): Book { /* ... */ }      // Handle returning
+  decrementCopies(): Device { /* ... */ }    // Handle checkout
+  incrementCopies(): Device { /* ... */ }    // Handle return
 }
 ```
-- **Responsibility**: Book state management and copy lifecycle
-- **Reason to change**: Book business rules or copy management logic
+- **Responsibility**: Device state management and unit lifecycle
+- **Reason to change**: Device business rules or unit management logic
 
 **`User` Class** (`src/domain/User.ts`)
 ```typescript
 export class User {
-  // ✅ Single Responsibility: Manages user borrowing state and validation
-  constructor(public id: string, public name: string, public borrowedBooks: string[] = []) {}
+  // ✅ Single Responsibility: Manages user checkout state and validation
+  constructor(public id: string, public name: string, public checkedOutDevices: string[] = []) {}
 
-  canBorrowMoreBooks(): boolean { /* ... */ }    // Business rule validation
-  hasBorrowedBook(): boolean { /* ... */ }       // State checking
-  borrowBook(): User { /* ... */ }               // State transitions
-  returnBook(): User { /* ... */ }               // State transitions
+  canCheckoutMore(): boolean { /* ... */ }    // Business rule validation
+  hasDevice(): boolean { /* ... */ }          // State checking
+  checkoutDevice(): User { /* ... */ }        // State transitions
+  returnDevice(): User { /* ... */ }          // State transitions
 }
 ```
-- **Responsibility**: User borrowing state and business rule validation
-- **Reason to change**: User borrowing rules or state management
+- **Responsibility**: User checkout state and business rule validation
+- **Reason to change**: User checkout rules or state management
 
-**`Library` Class** (`src/domain/Library.ts`)
+**`DevLab` Class** (`src/domain/DevLab.ts`)
 ```typescript
-export class Library {
-  // ✅ Single Responsibility: Manages the aggregate relationship between books and users
-  constructor(public readonly books: readonly Book[], public readonly users: readonly User[]) {}
+export class DevLab {
+  // ✅ Single Responsibility: Manages the aggregate relationship between devices and users
+  constructor(public readonly books: readonly Device[], public readonly users: readonly User[]) {}
 
-  addBook(): Library { /* ... */ }           // Book inventory management
-  removeBook(): Library { /* ... */ }       // Book inventory management
-  addUser(): Library { /* ... */ }          // User management
-  updateUser(): Library { /* ... */ }       // User management
+  addDevice(): DevLab { /* ... */ }          // Device inventory management
+  removeDevice(): DevLab { /* ... */ }       // Device inventory management
+  addUser(): DevLab { /* ... */ }            // User management
+  updateUser(): DevLab { /* ... */ }         // User management
   // Query methods...
 }
 ```
@@ -70,16 +70,16 @@ export class Library {
 
 #### Service Layer - Single Responsibilities
 
-**`LibraryService` Class** (`src/services/LibraryService.ts`)
+**`DevLabService` Class** (`src/services/DevLabService.ts`)
 ```typescript
-export class LibraryService {
+export class DevLabService {
   // ✅ Single Responsibility: Orchestrates domain operations and business workflows
-  constructor(private library: Library) {}
+  constructor(private library: DevLab) {}
 
-  viewBooks(): readonly Book[] { /* ... */ }     // Read operations
-  borrowBook(): Library { /* ... */ }           // Business workflow orchestration
-  returnBook(): Library { /* ... */ }           // Business workflow orchestration
-  addBook(): Library { /* ... */ }              // Administrative operations
+  viewDevices(): readonly Device[] { /* ... */ }    // Read operations
+  checkoutDevice(): DevLab { /* ... */ }            // Business workflow orchestration
+  returnDevice(): DevLab { /* ... */ }              // Business workflow orchestration
+  addDevice(): DevLab { /* ... */ }                 // Administrative operations
 }
 ```
 - **Responsibility**: Business workflow orchestration and domain coordination
@@ -92,7 +92,7 @@ export class LibraryService {
 // ✅ Single Responsibility: State management for specific domain
 const librarySlice = createSlice({
   name: 'library',
-  // Manages library state, async operations, and state transitions
+  // Manages device state, async operations, and state transitions
 });
 
 // ✅ Single Responsibility: Authentication state management
@@ -120,30 +120,30 @@ Classes should be **open for extension** but **closed for modification**.
 **Domain Entities are Immutable** - Extension via composition:
 ```typescript
 // ✅ OCP: Extend functionality without modifying existing code
-class Book {
+class Device {
   // Existing methods unchanged...
-  decrementCopies(): Book {
-    return new Book(this.title, this.copies - 1);  // Returns new instance
+  decrementCopies(): Device {
+    return new Device(this.name, this.units - 1);  // Returns new instance
   }
 }
 
-// Extension: Create specialized book types through composition
-class EBook extends Book {
-  constructor(title: string, copies: number, public format: string) {
-    super(title, copies);
+// Extension: Create specialized device types through composition
+class MobileDevice extends Device {
+  constructor(name: string, units: number, public os: string) {
+    super(name, units);
   }
-  // Additional methods without modifying base Book class
+  // Additional methods without modifying base Device class
 }
 ```
 
 **Service Extension** - Add new methods without modifying existing ones:
 ```typescript
-export class LibraryService {
+export class DevLabService {
   // Existing methods unchanged...
 
   // ✅ OCP: Extend with new functionality
-  searchBooks(query: string): Book[] {
-    // New feature without modifying existing borrow/return logic
+  searchDevices(query: string): Device[] {
+    // New feature without modifying existing checkout/return logic
   }
 
   generateReports(): Report[] {
@@ -175,8 +175,8 @@ const librarySlice = createSlice({
 **Constants for Business Rules** (`src/constants/borrowing.ts`):
 ```typescript
 // ✅ OCP: Change behavior through configuration, not code modification
-export const MAX_BOOKS_PER_USER = 2;  // Can be changed without touching domain logic
-export const BORROWING_PERIOD_DAYS = 14;
+export const MAX_DEVICES_PER_USER = 2;  // Can be changed without touching domain logic
+export const CHECKOUT_PERIOD_DAYS = 14;
 ```
 
 ---
@@ -189,34 +189,34 @@ export const BORROWING_PERIOD_DAYS = 14;
 
 ```typescript
 // Base Error class
-export class LibraryError extends Error {
+export class DevLabError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'LibraryError';
+    this.name = 'DevLabError';
   }
 }
 
 // ✅ LSP: Specialized errors are substitutable for base Error
-export class BorrowLimitError extends LibraryError {
+export class CheckoutLimitError extends DevLabError {
   constructor() {
-    super('Borrow limit exceeded');
-    this.name = 'BorrowLimitError';
+    super('User has reached the maximum number of checked out devices');
+    this.name = 'CheckoutLimitError';
   }
 }
 
-export class DuplicateBorrowError extends LibraryError {
+export class DuplicateCheckoutError extends DevLabError {
   constructor() {
-    super('Cannot borrow the same book twice');
-    this.name = 'DuplicateBorrowError';
+    super('User cannot checkout the same device twice');
+    this.name = 'DuplicateCheckoutError';
   }
 }
 
-// Usage: All errors can be caught as LibraryError or Error
+// Usage: All errors can be caught as DevLabError or Error
 try {
-  libraryService.borrowBook(userId, bookTitle);
+  devLabService.checkoutDevice(userId, deviceName);
 } catch (error) {
-  // ✅ LSP: Any LibraryError subtype works here
-  if (error instanceof LibraryError) {
+  // ✅ LSP: Any DevLabError subtype works here
+  if (error instanceof DevLabError) {
     showError(error.message);
   }
 }
@@ -226,16 +226,16 @@ try {
 
 **Domain Entity Contracts**:
 ```typescript
-interface BookOperations {
+interface DeviceOperations {
   hasCopies(): boolean;
-  decrementCopies(): Book;
-  incrementCopies(): Book;
+  decrementCopies(): Device;
+  incrementCopies(): Device;
 }
 
-// ✅ LSP: Any Book subclass must maintain these behavioral contracts
-class Book implements BookOperations {
-  // Must return new Book instance (immutable contract)
-  decrementCopies(): Book { /* ... */ }
+// ✅ LSP: Any Device subclass must maintain these behavioral contracts
+class Device implements DeviceOperations {
+  // Must return new Device instance (immutable contract)
+  decrementCopies(): Device { /* ... */ }
 }
 ```
 
@@ -247,27 +247,27 @@ class Book implements BookOperations {
 
 #### Segregated Service Interfaces
 
-**Library Service Segregation**:
+**DevLab Service Segregation**:
 ```typescript
 // Instead of one monolithic interface, services are focused:
 
 // ✅ ISP: Admin operations segregated
-interface AdminLibraryService {
-  addBook(book: Book): Library;
+interface AdminDevLabService {
+  addDevice(device: Device): DevLab;
   viewAllUsers(): User[];
   generateReports(): Report[];
 }
 
 // ✅ ISP: User operations segregated
-interface UserLibraryService {
-  viewBooks(): readonly Book[];
-  borrowBook(userId: string, bookTitle: string): Library;
-  returnBook(userId: string, bookTitle: string): Library;
+interface UserDevLabService {
+  viewDevices(): readonly Device[];
+  checkoutDevice(userId: string, deviceName: string): DevLab;
+  returnDevice(userId: string, deviceName: string): DevLab;
 }
 
 // ✅ ISP: Read operations segregated
-interface ReadOnlyLibraryService {
-  viewBooks(): readonly Book[];
+interface ReadOnlyDevLabService {
+  viewDevices(): readonly Device[];
   getUser(userId: string): User | undefined;
 }
 ```
@@ -278,13 +278,13 @@ interface ReadOnlyLibraryService {
 ```typescript
 // UserDashboard - depends only on user operations
 function UserDashboard() {
-  const { borrowBook, returnBook } = useLibrary();  // ✅ ISP: Only user methods
+  const { checkoutDevice, returnDevice } = useDevLab();  // ✅ ISP: Only user methods
   // No admin functionality exposed
 }
 
 // AdminDashboard - depends only on admin operations
 function AdminDashboard() {
-  const { addBook, users } = useLibrary();  // ✅ ISP: Only admin methods
+  const { addDevice, users } = useDevLab();  // ✅ ISP: Only admin methods
   // No unnecessary user methods
 }
 ```
@@ -293,11 +293,11 @@ function AdminDashboard() {
 
 ```typescript
 // ✅ ISP: Selectors provide only needed data
-export const selectUserBooks = (state: RootState) =>
-  state.library.books.filter(book => /* user-relevant logic */);
+export const selectUserDevices = (state: RootState) =>
+  state.library.books.filter(device => /* user-relevant logic */);
 
 export const selectAdminStats = (state: RootState) => ({
-  totalBooks: state.library.books.length,
+  totalDevices: state.library.books.length,
   totalUsers: state.library.users.length,
   // Admin-specific calculations
 });
@@ -313,19 +313,19 @@ export const selectAdminStats = (state: RootState) => ({
 
 **Service Layer Abstraction**:
 ```typescript
-// ✅ DIP: LibraryService depends on abstract Library interface
-export class LibraryService {
-  constructor(private library: Library) {}  // Depends on abstraction
+// ✅ DIP: DevLabService depends on abstract DevLab interface
+export class DevLabService {
+  constructor(private library: DevLab) {}  // Depends on abstraction
 
-  // Implementation details hidden behind Library interface
-  borrowBook(userId: string, bookTitle: string): Library {
-    // Uses Library methods without knowing implementation
+  // Implementation details hidden behind DevLab interface
+  checkoutDevice(userId: string, deviceName: string): DevLab {
+    // Uses DevLab methods without knowing implementation
   }
 }
 
 // ✅ DIP: Redux thunks inject dependencies
-export const borrowBookAsync = createAsyncThunk(
-  'library/borrowBook',
+export const checkoutDeviceAsync = createAsyncThunk(
+  'library/checkoutDevice',
   async (params, { getState }) => {
     const state = getState() as RootState;
     // Depends on abstracted state structure
@@ -339,8 +339,8 @@ export const borrowBookAsync = createAsyncThunk(
 ```typescript
 // ✅ DIP: Components depend on abstract service contracts
 function UserDashboard() {
-  // Depends on abstract useLibrary hook, not Redux implementation
-  const { borrowBook } = useLibrary();
+  // Depends on abstract useDevLab hook, not Redux implementation
+  const { checkoutDevice } = useDevLab();
 
   // Depends on abstract auth service
   const { user } = useAuth();
@@ -351,8 +351,8 @@ function UserDashboard() {
 
 ```typescript
 // ✅ DIP: Dependencies injected through configuration
-const libraryService = new LibraryService(
-  new Library(initialBooks, initialUsers)  // Abstracted data source
+const devLabService = new DevLabService(
+  new DevLab(initialDevices, initialUsers)  // Abstracted data source
 );
 
 // Redux store provides abstracted state access
@@ -369,12 +369,12 @@ const store = configureStore({
 ## 🏛️ Clean Architecture Layers
 
 ### Domain Layer (Innermost)
-- **Entities**: `Book`, `User`, `Library`
+- **Entities**: `Device`, `User`, `DevLab`
 - **Business Rules**: Pure business logic, no external dependencies
 - **Immutability**: All state changes create new instances
 
 ### Application Layer
-- **Services**: `LibraryService`, `AuthService`
+- **Services**: `DevLabService`, `AuthService`
 - **Use Cases**: Business workflow orchestration
 - **Application Logic**: Coordinates domain entities
 
@@ -394,19 +394,19 @@ Infrastructure ← Application ← Domain
 ## 🎨 Design Patterns Used
 
 ### Domain-Driven Design (DDD)
-- **Entities**: `Book`, `User` with business logic
-- **Aggregate**: `Library` manages consistency boundaries
+- **Entities**: `Device`, `User` with business logic
+- **Aggregate**: `DevLab` manages consistency boundaries
 - **Value Objects**: Immutable domain objects
-- **Repository Pattern**: `Library` acts as in-memory repository
+- **Repository Pattern**: `DevLab` acts as in-memory repository
 
 ### Service Layer Pattern
-- **Application Services**: `LibraryService` orchestrates domain operations
+- **Application Services**: `DevLabService` orchestrates domain operations
 - **Domain Services**: Business logic coordination
 - **Infrastructure Services**: External concerns (auth, storage)
 
 ### CQRS Pattern (Partial)
-- **Commands**: `borrowBook`, `returnBook`, `addBook`
-- **Queries**: `viewBooks`, `getUser`
+- **Commands**: `checkoutDevice`, `returnDevice`, `addDevice`
+- **Queries**: `viewDevices`, `getUser`
 - **Separation**: Read and write operations are distinct
 
 ### Observer Pattern

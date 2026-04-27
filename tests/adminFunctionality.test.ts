@@ -1,236 +1,235 @@
-import { Library } from '../src/domain/Library';
-import { Book } from '../src/domain/Book';
+import { DevLab } from '../src/domain/DevLab';
+import { Device } from '../src/domain/Device';
 import { User } from '../src/domain/User';
-import { LibraryService } from '../src/services/LibraryService';
+import { DevLabService } from '../src/services/DevLabService';
 
 describe('Admin Functionality', () => {
-  let library: Library;
-  let service: LibraryService;
+  let devlab: DevLab;
+  let service: DevLabService;
   let adminUser: User;
   let regularUser: User;
 
   beforeEach(() => {
     adminUser = new User('admin1', 'Admin User');
     regularUser = new User('user1', 'Regular User');
-    library = new Library();
-    service = new LibraryService(library);
+    devlab = new DevLab();
+    service = new DevLabService(devlab);
     service.addUser(adminUser);
     service.addUser(regularUser);
   });
 
-  describe('Admin Borrowing Books as User', () => {
-    it('should allow admin to borrow books like a regular user', () => {
-      const book = new Book('Admin Book', 1);
-      service.addBook(book);
+  describe('Admin Checking Out Devices as User', () => {
+    it('should allow admin to checkout devices like a regular user', () => {
+      const device = new Device('Admin Device', 1);
+      service.addDevice(device);
 
-      const updatedLibrary = service.borrowBook('admin1', 'Admin Book');
+      const updatedDevLab = service.checkoutDevice('admin1', 'Admin Device');
 
-      const updatedAdmin = updatedLibrary.getUser('admin1');
-      expect(updatedAdmin?.borrowedBooks).toContain('Admin Book');
-      expect(updatedLibrary.getBooks().find(b => b.title === 'Admin Book')).toBeUndefined();
+      const updatedAdmin = updatedDevLab.getUser('admin1');
+      expect(updatedAdmin?.checkedOutDevices).toContain('Admin Device');
+      expect(updatedDevLab.getBooks().find(d => d.name === 'Admin Device')).toBeUndefined();
     });
 
-    it('should enforce same borrowing limits for admin users', () => {
-      service.addBook(new Book('Book 1', 1));
-      service.addBook(new Book('Book 2', 1));
-      service.addBook(new Book('Book 3', 1));
+    it('should enforce same checkout limits for admin users', () => {
+      service.addDevice(new Device('Device 1', 1));
+      service.addDevice(new Device('Device 2', 1));
+      service.addDevice(new Device('Device 3', 1));
 
-      // Admin borrows 2 books (at limit)
-      service.borrowBook('admin1', 'Book 1');
-      service.borrowBook('admin1', 'Book 2');
+      // Admin checks out 2 devices (at limit)
+      service.checkoutDevice('admin1', 'Device 1');
+      service.checkoutDevice('admin1', 'Device 2');
 
-      // Third book should fail with BorrowLimitError
-      expect(() => service.borrowBook('admin1', 'Book 3')).toThrow('User has reached the maximum number of borrowed books');
+      // Third device should fail
+      expect(() => service.checkoutDevice('admin1', 'Device 3')).toThrow('User has reached the maximum number of checked out devices');
     });
 
-    it('should prevent admin from borrowing same book twice', () => {
-      const book = new Book('Duplicate Book', 2);
-      service.addBook(book);
+    it('should prevent admin from checking out same device twice', () => {
+      const device = new Device('Duplicate Device', 2);
+      service.addDevice(device);
 
-      service.borrowBook('admin1', 'Duplicate Book');
+      service.checkoutDevice('admin1', 'Duplicate Device');
 
-      expect(() => service.borrowBook('admin1', 'Duplicate Book')).toThrow('User cannot borrow the same book twice');
+      expect(() => service.checkoutDevice('admin1', 'Duplicate Device')).toThrow('User cannot checkout the same device twice');
     });
   });
 
-  describe('Admin Viewing User Borrowing Data', () => {
-    it('should allow admin to view all users and their borrowed books', () => {
-      // Set up users with borrowed books
-      service.addBook(new Book('Book 1', 1));
-      service.addBook(new Book('Book 2', 1));
-      service.addBook(new Book('Book 3', 1));
+  describe('Admin Viewing User Checkout Data', () => {
+    it('should allow admin to view all users and their checked out devices', () => {
+      service.addDevice(new Device('Device 1', 1));
+      service.addDevice(new Device('Device 2', 1));
+      service.addDevice(new Device('Device 3', 1));
 
-      service.borrowBook('user1', 'Book 1');
-      service.borrowBook('admin1', 'Book 2');
+      service.checkoutDevice('user1', 'Device 1');
+      service.checkoutDevice('admin1', 'Device 2');
 
-      const currentLibrary = service.getCurrentLibrary();
-      const allUsers = currentLibrary.getUsers();
+      const currentDevLab = service.getCurrentDevLab();
+      const allUsers = currentDevLab.getUsers();
 
       expect(allUsers).toHaveLength(2);
 
-      const regularUser = allUsers.find(u => u.id === 'user1');
+      const regular = allUsers.find(u => u.id === 'user1');
       const admin = allUsers.find(u => u.id === 'admin1');
 
-      expect(regularUser?.borrowedBooks).toContain('Book 1');
-      expect(admin?.borrowedBooks).toContain('Book 2');
+      expect(regular?.checkedOutDevices).toContain('Device 1');
+      expect(admin?.checkedOutDevices).toContain('Device 2');
     });
 
-    it('should show empty borrowed books list for users who havent borrowed', () => {
-      const currentLibrary = service.getCurrentLibrary();
-      const allUsers = currentLibrary.getUsers();
+    it('should show empty checked out list for users who have not checked out', () => {
+      const currentDevLab = service.getCurrentDevLab();
+      const allUsers = currentDevLab.getUsers();
 
       allUsers.forEach(user => {
-        expect(user.borrowedBooks).toEqual([]);
+        expect(user.checkedOutDevices).toEqual([]);
       });
     });
 
-    it('should track multiple books borrowed by single user', () => {
-      service.addBook(new Book('Book 1', 1));
-      service.addBook(new Book('Book 2', 1));
+    it('should track multiple devices checked out by single user', () => {
+      service.addDevice(new Device('Device 1', 1));
+      service.addDevice(new Device('Device 2', 1));
 
-      service.borrowBook('user1', 'Book 1');
-      service.borrowBook('user1', 'Book 2');
+      service.checkoutDevice('user1', 'Device 1');
+      service.checkoutDevice('user1', 'Device 2');
 
-      const currentLibrary = service.getCurrentLibrary();
-      const user = currentLibrary.getUser('user1');
+      const currentDevLab = service.getCurrentDevLab();
+      const user = currentDevLab.getUser('user1');
 
-      expect(user?.borrowedBooks).toHaveLength(2);
-      expect(user?.borrowedBooks).toContain('Book 1');
-      expect(user?.borrowedBooks).toContain('Book 2');
+      expect(user?.checkedOutDevices).toHaveLength(2);
+      expect(user?.checkedOutDevices).toContain('Device 1');
+      expect(user?.checkedOutDevices).toContain('Device 2');
     });
   });
 
   describe('Stock Manipulation Prevention', () => {
-    it('should prevent borrowing books with zero copies', () => {
-      const book = new Book('Out of Stock', 0);
-      service.addBook(book);
+    it('should prevent checking out devices with zero units', () => {
+      const device = new Device('Out of Stock', 0);
+      service.addDevice(device);
 
-      expect(() => service.borrowBook('user1', 'Out of Stock')).toThrow('Book not available');
+      expect(() => service.checkoutDevice('user1', 'Out of Stock')).toThrow('Device not available');
     });
 
-    it('should prevent borrowing non-existent books', () => {
-      expect(() => service.borrowBook('user1', 'Non-existent Book')).toThrow('Book not available');
+    it('should prevent checking out non-existent devices', () => {
+      expect(() => service.checkoutDevice('user1', 'Non-existent Device')).toThrow('Device not available');
     });
 
-    it('should handle borrowing last copy correctly', () => {
-      const book = new Book('Last Copy', 1);
-      service.addBook(book);
+    it('should handle checking out last unit correctly', () => {
+      const device = new Device('Last Unit', 1);
+      service.addDevice(device);
 
-      service.borrowBook('user1', 'Last Copy');
+      service.checkoutDevice('user1', 'Last Unit');
 
-      // Book should be completely removed from inventory
-      const currentLibrary = service.getCurrentLibrary();
-      expect(currentLibrary.findBook('Last Copy')).toBeUndefined();
+      // Device should be completely removed from inventory
+      const currentDevLab = service.getCurrentDevLab();
+      expect(currentDevLab.findDevice('Last Unit')).toBeUndefined();
 
-      // But user should have it borrowed
-      const user = currentLibrary.getUser('user1');
-      expect(user?.borrowedBooks).toContain('Last Copy');
+      // But user should have it checked out
+      const user = currentDevLab.getUser('user1');
+      expect(user?.checkedOutDevices).toContain('Last Unit');
     });
 
-    it('should maintain correct inventory count with multiple copies', () => {
-      const book = new Book('Multiple Copies', 3);
-      service.addBook(book);
+    it('should maintain correct inventory count with multiple units', () => {
+      const device = new Device('Multiple Units', 3);
+      service.addDevice(device);
 
-      service.borrowBook('user1', 'Multiple Copies');
+      service.checkoutDevice('user1', 'Multiple Units');
 
-      const currentLibrary = service.getCurrentLibrary();
-      const remainingBook = currentLibrary.findBook('Multiple Copies');
-      expect(remainingBook?.copies).toBe(2);
+      const currentDevLab = service.getCurrentDevLab();
+      const remainingDevice = currentDevLab.findDevice('Multiple Units');
+      expect(remainingDevice?.units).toBe(2);
     });
   });
 
   describe('Edge Cases and Error Handling', () => {
-    it('should handle borrowing when user is at exact limit', () => {
-      service.addBook(new Book('Book 1', 1));
-      service.addBook(new Book('Book 2', 1));
+    it('should handle checkout when user is at exact limit', () => {
+      service.addDevice(new Device('Device 1', 1));
+      service.addDevice(new Device('Device 2', 1));
 
-      // Borrow exactly at limit (2 books)
-      service.borrowBook('user1', 'Book 1');
-      service.borrowBook('user1', 'Book 2');
+      // Checkout exactly at limit (2 devices)
+      service.checkoutDevice('user1', 'Device 1');
+      service.checkoutDevice('user1', 'Device 2');
 
-      const user = service.getCurrentLibrary().getUser('user1');
-      expect(user?.borrowedBooks).toHaveLength(2);
-      expect(user?.canBorrowMoreBooks()).toBe(false);
+      const user = service.getCurrentDevLab().getUser('user1');
+      expect(user?.checkedOutDevices).toHaveLength(2);
+      expect(user?.canCheckoutMore()).toBe(false);
     });
 
-    it('should handle return of non-existent borrowed book gracefully', () => {
-      service.addBook(new Book('Book 1', 1));
+    it('should handle return of device not in user possession', () => {
+      service.addDevice(new Device('Device 1', 1));
 
-      expect(() => service.returnBook('user1', 'Book 1')).toThrow('Book not borrowed by user');
+      expect(() => service.returnDevice('user1', 'Device 1')).toThrow('Device not checked out by user');
     });
 
     it('should handle operations on non-existent users', () => {
-      service.addBook(new Book('Book 1', 1));
+      service.addDevice(new Device('Device 1', 1));
 
-      expect(() => service.borrowBook('nonexistent-user', 'Book 1')).toThrow('User not found');
-      expect(() => service.returnBook('nonexistent-user', 'Book 1')).toThrow('User not found');
+      expect(() => service.checkoutDevice('nonexistent-user', 'Device 1')).toThrow('User not found');
+      expect(() => service.returnDevice('nonexistent-user', 'Device 1')).toThrow('User not found');
     });
 
-    it('should handle empty library operations', () => {
-      const emptyLibrary = service.getCurrentLibrary();
-      expect(emptyLibrary.getBooks()).toHaveLength(0);
-      expect(emptyLibrary.getUsers()).toHaveLength(2); // Admin and regular user added in beforeEach
+    it('should handle empty DevLab operations', () => {
+      const emptyDevLab = service.getCurrentDevLab();
+      expect(emptyDevLab.getBooks()).toHaveLength(0);
+      expect(emptyDevLab.getUsers()).toHaveLength(2); // Admin and regular user added in beforeEach
     });
 
-    it('should handle multiple users borrowing same book title', () => {
-      // Add multiple copies
-      service.addBook(new Book('Popular Book', 2));
+    it('should handle multiple users checking out same device model', () => {
+      // Add multiple units
+      service.addDevice(new Device('Popular Device', 2));
 
-      // Two different users borrow the same title
-      service.borrowBook('user1', 'Popular Book');
+      // Two different users checkout the same model
+      service.checkoutDevice('user1', 'Popular Device');
 
       const anotherUser = new User('user2', 'Another User');
       service.addUser(anotherUser);
-      service.borrowBook('user2', 'Popular Book');
+      service.checkoutDevice('user2', 'Popular Device');
 
-      const currentLibrary = service.getCurrentLibrary();
-      const user1 = currentLibrary.getUser('user1');
-      const user2 = currentLibrary.getUser('user2');
+      const currentDevLab = service.getCurrentDevLab();
+      const user1 = currentDevLab.getUser('user1');
+      const user2 = currentDevLab.getUser('user2');
 
-      expect(user1?.borrowedBooks).toContain('Popular Book');
-      expect(user2?.borrowedBooks).toContain('Popular Book');
+      expect(user1?.checkedOutDevices).toContain('Popular Device');
+      expect(user2?.checkedOutDevices).toContain('Popular Device');
 
-      // Book should be completely borrowed out
-      expect(currentLibrary.findBook('Popular Book')).toBeUndefined();
+      // Device should be completely checked out
+      expect(currentDevLab.findDevice('Popular Device')).toBeUndefined();
     });
   });
 
   describe('Admin vs Regular User Behavior Consistency', () => {
     it('should apply same rules to admin and regular users', () => {
-      service.addBook(new Book('Book 1', 1));
-      service.addBook(new Book('Book 2', 1));
-      service.addBook(new Book('Book 3', 1));
-      service.addBook(new Book('Book 4', 1));
+      service.addDevice(new Device('Device 1', 1));
+      service.addDevice(new Device('Device 2', 1));
+      service.addDevice(new Device('Device 3', 1));
+      service.addDevice(new Device('Device 4', 1));
 
-      // Admin borrows up to limit (2 books)
-      service.borrowBook('admin1', 'Book 1');
-      service.borrowBook('admin1', 'Book 2');
+      // Admin checks out up to limit (2 devices)
+      service.checkoutDevice('admin1', 'Device 1');
+      service.checkoutDevice('admin1', 'Device 2');
 
-      // Admin should be blocked from borrowing more
-      expect(() => service.borrowBook('admin1', 'Book 3')).toThrow('User has reached the maximum number of borrowed books');
+      // Admin should be blocked from checking out more
+      expect(() => service.checkoutDevice('admin1', 'Device 3')).toThrow('User has reached the maximum number of checked out devices');
 
-      // But regular user can still borrow
-      service.borrowBook('user1', 'Book 3');
-      service.borrowBook('user1', 'Book 4');
+      // But regular user can still checkout
+      service.checkoutDevice('user1', 'Device 3');
+      service.checkoutDevice('user1', 'Device 4');
 
-      const currentLibrary = service.getCurrentLibrary();
-      expect(currentLibrary.getUser('admin1')?.borrowedBooks).toHaveLength(2);
-      expect(currentLibrary.getUser('user1')?.borrowedBooks).toHaveLength(2);
+      const currentDevLab = service.getCurrentDevLab();
+      expect(currentDevLab.getUser('admin1')?.checkedOutDevices).toHaveLength(2);
+      expect(currentDevLab.getUser('user1')?.checkedOutDevices).toHaveLength(2);
     });
 
-    it('should maintain separate borrowing records for admin and users', () => {
-      service.addBook(new Book('Shared Book', 2));
+    it('should maintain separate checkout records for admin and users', () => {
+      service.addDevice(new Device('Shared Device', 2));
 
-      service.borrowBook('admin1', 'Shared Book');
+      service.checkoutDevice('admin1', 'Shared Device');
 
-      const admin = service.getCurrentLibrary().getUser('admin1');
-      expect(admin?.borrowedBooks).toContain('Shared Book');
+      const admin = service.getCurrentDevLab().getUser('admin1');
+      expect(admin?.checkedOutDevices).toContain('Shared Device');
 
-      // Admin borrowing shouldn't affect regular user borrowing
-      service.borrowBook('user1', 'Shared Book');
+      // Admin checkout shouldn't affect regular user checkout
+      service.checkoutDevice('user1', 'Shared Device');
 
-      const user = service.getCurrentLibrary().getUser('user1');
-      expect(user?.borrowedBooks).toContain('Shared Book');
+      const user = service.getCurrentDevLab().getUser('user1');
+      expect(user?.checkedOutDevices).toContain('Shared Device');
     });
   });
 });

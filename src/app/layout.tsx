@@ -6,8 +6,8 @@ import { Providers } from './providers'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Library Management System',
-  description: 'A complete library management system with user authentication and admin features',
+  title: 'DevLab — Test Device Manager',
+  description: 'A complete test device checkout system for frontend and mobile dev teams',
 }
 
 export default function RootLayout({

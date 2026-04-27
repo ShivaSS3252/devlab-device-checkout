@@ -3,12 +3,12 @@
 import { useEffect } from 'react'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { initializeAuth } from '@/store/authSlice'
-import { initializeLibrary } from '@/store/librarySlice'
+import { initializeDevLab } from '@/store/librarySlice'
 import { LoginPage } from '@/components/LoginPage'
 import { UserDashboard } from '@/components/UserDashboard'
 import { AdminDashboard } from '@/components/AdminDashboard'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
-import { Book } from '@/domain/Book'
+import { Device } from '@/domain/Device'
 import { User } from '@/domain/User'
 
 export default function Home() {
@@ -19,13 +19,13 @@ export default function Home() {
     // Initialize auth state
     dispatch(initializeAuth())
 
-    // Initialize library with some sample data
+    // Initialize DevLab with sample test devices
     const sampleBooks = [
-      new Book('The Clean Coder', 3),
-      new Book('Clean Code', 2),
-      new Book('Design Patterns', 1),
-      new Book('Refactoring', 2),
-      new Book('Domain-Driven Design', 1)
+      new Device('iPhone 15 Pro', 3),
+      new Device('Samsung Galaxy S24', 2),
+      new Device('iPad Pro 12.9', 1),
+      new Device('Google Pixel 8', 2),
+      new Device('MacBook Pro 14', 1)
     ]
 
     const sampleUsers = [
@@ -33,7 +33,7 @@ export default function Home() {
       new User('admin1', 'Admin User')
     ]
 
-    dispatch(initializeLibrary({ books: sampleBooks, users: sampleUsers }))
+    dispatch(initializeDevLab({ books: sampleBooks, users: sampleUsers }))
   }, [dispatch])
 
   if (isLoading) {
