@@ -1,7 +1,7 @@
 {
-  "name": "library-management",
+  "name": "devlab-device-checkout",
   "version": "1.0.0",
-  "description": "A complete frontend library management system with React, Next.js, and TypeScript",
+  "description": "DevLab — Test Device Checkout System built with React, Next.js, and TypeScript",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

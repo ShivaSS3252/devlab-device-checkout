@@ -53,7 +53,7 @@ src/
 ├── store/                 # Redux state management
 │   ├── index.ts          # Store configuration
 │   ├── authSlice.ts       # Authentication state
-│   ├── librarySlice.ts    # Device state & async actions
+│   ├── deviceSlice.ts     # Device state & async actions
 │   └── hooks.ts          # Typed Redux hooks
 ├── types/                 # TypeScript type definitions
 │   └── auth.ts           # Authentication types
@@ -63,9 +63,9 @@ src/
 │   ├── CheckoutLimitError.ts    # Checkout limit violations
 │   └── DuplicateCheckoutError.ts # Duplicate checkout attempts
 └── tests/                 # Test suites
-    ├── viewBooks.test.ts      # Viewing devices functionality
-    ├── borrowBooks.test.ts    # Checking out devices functionality
-    └── returnBooks.test.ts    # Returning devices functionality
+    ├── viewDevices.test.ts      # Viewing devices functionality
+    ├── checkoutDevices.test.ts    # Checking out devices functionality
+    └── returnDevices.test.ts    # Returning devices functionality
 ```
 
 ### Authentication Flow Design Decisions
@@ -426,9 +426,9 @@ npm run type-check
 The project follows Test-Driven Development (TDD) with comprehensive test coverage:
 
 #### Test Files
-- **`tests/viewBooks.test.ts`**: Tests for viewing devices functionality
-- **`tests/borrowBooks.test.ts`**: Tests for checking out devices with business rules
-- **`tests/returnBooks.test.ts`**: Tests for returning devices and inventory management
+- **`tests/viewDevices.test.ts`**: Tests for viewing devices functionality
+- **`tests/checkoutDevices.test.ts`**: Tests for checking out devices with business rules
+- **`tests/returnDevices.test.ts`**: Tests for returning devices and inventory management
 
 #### Test Coverage
 - **Overall Coverage**: 93.37% statement coverage

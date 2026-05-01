@@ -6,9 +6,10 @@ import { CheckoutLimitError } from '@/errors/CheckoutLimitError';
 import { DuplicateCheckoutError } from '@/errors/DuplicateCheckoutError';
 import { DevLabService } from '@/services/DevLabService';
 import { RootState } from './index';
+import { logoutAsync } from './authSlice';
 
 export interface DevLabState {
-  books: Device[];
+  devices: Device[];
   users: User[];
   currentUser: User | null;
   isLoading: boolean;
@@ -16,58 +17,52 @@ export interface DevLabState {
 }
 
 const initialState: DevLabState = {
-  books: [],
+  devices: [],
   users: [],
   currentUser: null,
   isLoading: false,
   error: null,
 };
 
+// Helpers to always reconstruct class instances from plain Redux state objects
+const toDevice = (d: any): Device => new Device(d.name, d.units);
+const toUser = (u: any): User => new User(u.id, u.name, [...(u.checkedOutDevices || [])]);
+
 export const fetchDevicesAsync = createAsyncThunk(
   'devlab/fetchDevices',
   async (_, { getState }) => {
     const state = getState() as RootState;
-    return state.devlab.books;
+    return state.devlab.devices;
   }
 );
 
 export const checkoutDeviceAsync = createAsyncThunk(
   'devlab/checkoutDevice',
-  async ({ userId, bookTitle }: { userId: string; bookTitle: string }, { getState, rejectWithValue }) => {
+  async ({ userId, deviceName }: { userId: string; deviceName: string }, { getState, rejectWithValue }) => {
     try {
       const state = getState() as RootState;
-      const { books, users, currentUser } = state.devlab;
+      const { devices, users } = state.devlab;
 
-      const user = currentUser || users.find((u: User) => u.id === userId);
-      const device = books.find((b: Device) => b.name === bookTitle);
+      // Always reconstruct class instances so prototype methods are available
+      const rawUser = users.find((u: any) => u.id === userId);
+      const rawDevice = devices.find((d: any) => d.name === deviceName);
 
-      if (!user) {
-        throw new Error('User not found');
-      }
-      if (!device || device.units === 0) {
-        throw new Error('Device not available');
-      }
-      if (user.checkedOutDevices.length >= 2) {
-        throw new CheckoutLimitError();
-      }
-      if (user.checkedOutDevices.includes(bookTitle)) {
-        throw new DuplicateCheckoutError();
-      }
+      if (!rawUser) throw new Error('User not found');
+      if (!rawDevice || rawDevice.units === 0) throw new Error('Device not available');
 
-      const updatedBooks = books.map((b: Device) =>
-        b.name === bookTitle ? b.decrementCopies() : b
-      ).filter((b: Device) => b.hasCopies());
+      const user = toUser(rawUser);
 
-      const updatedUser = user.checkoutDevice(bookTitle);
-      const updatedUsers = users.map((u: User) =>
-        u.id === userId ? updatedUser : u
-      );
+      if (user.checkedOutDevices.length >= 2) throw new CheckoutLimitError();
+      if (user.checkedOutDevices.includes(deviceName)) throw new DuplicateCheckoutError();
 
-      return {
-        books: updatedBooks,
-        users: updatedUsers,
-        currentUser: updatedUser
-      };
+      const updatedDevices = devices
+        .map((d: any) => toDevice({ ...d, units: d.name === deviceName ? d.units - 1 : d.units }))
+        .filter((d: Device) => d.units > 0);
+
+      const updatedUser = new User(rawUser.id, rawUser.name, [...rawUser.checkedOutDevices, deviceName]);
+      const updatedUsers = users.map((u: any) => u.id === userId ? updatedUser : toUser(u));
+
+      return { devices: updatedDevices, users: updatedUsers, currentUser: updatedUser };
     } catch (error) {
       if (error instanceof CheckoutLimitError) {
         return rejectWithValue('Checkout limit exceeded (max 2 devices)');
@@ -82,16 +77,20 @@ export const checkoutDeviceAsync = createAsyncThunk(
 
 export const returnDeviceAsync = createAsyncThunk(
   'devlab/returnDevice',
-  async ({ userId, bookTitle }: { userId: string; bookTitle: string }, { getState }) => {
+  async ({ userId, deviceName }: { userId: string; deviceName: string }, { getState }) => {
     const state = getState() as RootState;
-    const service = new DevLabService(new DevLab(state.devlab.books, state.devlab.users));
 
-    const updated = service.returnDevice(userId, bookTitle);
+    // Always reconstruct class instances so prototype methods are available
+    const devices = state.devlab.devices.map(toDevice);
+    const users = state.devlab.users.map(toUser);
+
+    const service = new DevLabService(new DevLab(devices, users));
+    const updated = service.returnDevice(userId, deviceName);
 
     return {
-      books: [...updated.getBooks()],
+      devices: [...updated.getDevices()],
       users: [...updated.getUsers()],
-      currentUser: updated.getUser(userId) || null
+      currentUser: updated.getUser(userId) || null,
     };
   }
 );
@@ -100,14 +99,16 @@ export const addDeviceAsync = createAsyncThunk(
   'devlab/addDevice',
   async (device: Device, { getState }) => {
     const state = getState() as RootState;
-    const currentBooks = state.devlab.books;
+    const currentDevices = state.devlab.devices;
 
-    const existing = currentBooks.find((b: Device) => b.name === device.name);
-    const updatedBooks = existing
-      ? currentBooks.map((b: Device) => b.name === device.name ? new Device(b.name, b.units + device.units) : b)
-      : [...currentBooks, device];
+    const existing = currentDevices.find((d: any) => d.name === device.name);
+    const updatedDevices = existing
+      ? currentDevices.map((d: any) =>
+          d.name === device.name ? new Device(d.name, d.units + device.units) : toDevice(d)
+        )
+      : [...currentDevices.map(toDevice), device];
 
-    return updatedBooks;
+    return updatedDevices;
   }
 );
 
@@ -115,8 +116,7 @@ export const addUserAsync = createAsyncThunk(
   'devlab/addUser',
   async (user: User, { getState }) => {
     const state = getState() as RootState;
-    const currentUsers = state.devlab.users;
-    return [...currentUsers, user];
+    return [...state.devlab.users, user];
   }
 );
 
@@ -130,34 +130,32 @@ const devLabSlice = createSlice({
     setCurrentUser: (state, action: PayloadAction<User>) => {
       state.currentUser = action.payload;
     },
-    initializeDevLab: (state, action: PayloadAction<{ books: Device[]; users: User[] }>) => {
-      state.books = action.payload.books;
+    initializeDevLab: (state, action: PayloadAction<{ devices: Device[]; users: User[] }>) => {
+      state.devices = action.payload.devices;
       state.users = action.payload.users;
     },
   },
   extraReducers: (builder) => {
     builder
-      // Fetch Devices
       .addCase(fetchDevicesAsync.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
       .addCase(fetchDevicesAsync.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.books = action.payload;
+        state.devices = action.payload;
       })
       .addCase(fetchDevicesAsync.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       })
-      // Checkout Device
       .addCase(checkoutDeviceAsync.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
       .addCase(checkoutDeviceAsync.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.books = action.payload.books;
+        state.devices = action.payload.devices;
         state.users = action.payload.users;
         state.currentUser = action.payload.currentUser;
       })
@@ -165,14 +163,13 @@ const devLabSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload as string;
       })
-      // Return Device
       .addCase(returnDeviceAsync.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
       .addCase(returnDeviceAsync.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.books = action.payload.books;
+        state.devices = action.payload.devices;
         state.users = action.payload.users;
         state.currentUser = action.payload.currentUser;
       })
@@ -180,13 +177,14 @@ const devLabSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload as string;
       })
-      // Add Device
       .addCase(addDeviceAsync.fulfilled, (state, action) => {
-        state.books = action.payload;
+        state.devices = action.payload;
       })
-      // Add User
       .addCase(addUserAsync.fulfilled, (state, action) => {
         state.users = action.payload;
+      })
+      .addCase(logoutAsync.fulfilled, (state) => {
+        state.currentUser = null;
       });
   },
 });

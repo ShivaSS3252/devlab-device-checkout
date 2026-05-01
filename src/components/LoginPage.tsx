@@ -9,10 +9,10 @@ export function LoginPage() {
   const dispatch = useAppDispatch()
   const { isLoading, error } = useAppSelector((state) => state.auth)
 
-  const handleLogin = async (provider: 'google' | 'github') => {
+  const handleLogin = async (userId: 'admin' | 'user1' | 'user2') => {
     const credentials: LoginCredentials = {
-      provider,
-      code: provider === 'google' ? 'admin_token' : 'user_token' // Mock codes for demo
+      provider: userId === 'admin' ? 'google' : 'github',
+      code: userId === 'admin' ? 'admin_token' : `${userId}_token`
     }
 
     try {
@@ -45,7 +45,7 @@ export function LoginPage() {
           <div className="space-y-4">
             {/* Admin Login Button */}
             <button
-              onClick={() => handleLogin('google')}
+              onClick={() => handleLogin('admin')}
               disabled={isLoading}
               className="w-full flex justify-center items-center px-6 py-4 border border-transparent text-base font-semibold rounded-xl text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transform transition-all duration-200 hover:scale-105 shadow-lg"
             >
@@ -58,17 +58,35 @@ export function LoginPage() {
               Login as Administrator
             </button>
 
-            {/* User Login Button */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200" />
+              </div>
+              <div className="relative flex justify-center text-xs text-gray-400 uppercase tracking-wide">
+                <span className="bg-white px-3">Users</span>
+              </div>
+            </div>
+
+            {/* User 1 */}
             <button
-              onClick={() => handleLogin('github')}
+              onClick={() => handleLogin('user1')}
               disabled={isLoading}
-              className="w-full flex justify-center items-center px-6 py-4 border-2 border-gray-300 text-base font-semibold rounded-xl text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transform transition-all duration-200 hover:scale-105 shadow-lg"
+              className="w-full flex justify-center items-center px-6 py-3 border-2 border-gray-300 text-sm font-semibold rounded-xl text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transform transition-all duration-200 hover:scale-105 shadow"
             >
-              <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-              </svg>
-              Login as User
+              <div className="w-6 h-6 mr-3 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">J</div>
+              Login as John Doe
             </button>
+
+            {/* User 2 */}
+            <button
+              onClick={() => handleLogin('user2')}
+              disabled={isLoading}
+              className="w-full flex justify-center items-center px-6 py-3 border-2 border-gray-300 text-sm font-semibold rounded-xl text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transform transition-all duration-200 hover:scale-105 shadow"
+            >
+              <div className="w-6 h-6 mr-3 bg-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold">J</div>
+              Login as Jane Smith
+            </button>
+
           </div>
 
           {/* Error Message */}
@@ -89,7 +107,7 @@ export function LoginPage() {
               <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
               </svg>
-              Demo: Google = Admin, GitHub = User
+              Demo: Mock authentication — no passwords required
             </div>
           </div>
         </div>

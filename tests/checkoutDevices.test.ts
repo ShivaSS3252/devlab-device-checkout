@@ -25,7 +25,7 @@ describe('Checking Out Devices', () => {
 
     const updatedUser = updatedDevLab.getUser('user1');
     expect(updatedUser?.checkedOutDevices).toContain('Device 1');
-    expect(updatedDevLab.getBooks().find(d => d.name === 'Device 1')).toBeUndefined();
+    expect(updatedDevLab.getDevices().find(d => d.name === 'Device 1')).toBeUndefined();
   });
 
   it('should decrement device units when multiple units exist', () => {

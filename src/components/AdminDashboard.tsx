@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
-import { fetchDevicesAsync, addDeviceAsync, checkoutDeviceAsync, returnDeviceAsync } from '@/store/librarySlice'
+import { fetchDevicesAsync, addDeviceAsync, checkoutDeviceAsync, returnDeviceAsync } from '@/store/deviceSlice'
 import { logoutAsync } from '@/store/authSlice'
 import { Device } from '@/domain/Device'
 import { User } from '@/domain/User'
@@ -13,7 +13,7 @@ import { ITEMS_PER_PAGE } from '@/constants/borrowing'
 export function AdminDashboard() {
   const dispatch = useAppDispatch()
   const { user } = useAppSelector((state) => state.auth)
-  const { books, users, currentUser, isLoading, error } = useAppSelector((state) => state.devlab)
+  const { devices, users, currentUser, isLoading, error } = useAppSelector((state) => state.devlab)
   const { showError, showSuccess } = useToast()
 
   const [newDeviceName, setNewDeviceName] = useState('')
@@ -48,19 +48,19 @@ export function AdminDashboard() {
 
   const handleAdminCheckout = async (deviceName: string) => {
     if (user) {
-      await dispatch(checkoutDeviceAsync({ userId: user.id, bookTitle: deviceName }))
+      await dispatch(checkoutDeviceAsync({ userId: user.id, deviceName: deviceName }))
       showSuccess(`Successfully checked out "${deviceName}"`)
     }
   }
 
   const handleAdminReturn = async (deviceName: string) => {
     if (user) {
-      await dispatch(returnDeviceAsync({ userId: user.id, bookTitle: deviceName }))
+      await dispatch(returnDeviceAsync({ userId: user.id, deviceName: deviceName }))
       showSuccess(`Successfully returned "${deviceName}"`)
     }
   }
 
-  const getTotalUnits = () => books.reduce((total: number, device: Device) => total + device.units, 0)
+  const getTotalUnits = () => devices.reduce((total: number, device: Device) => total + device.units, 0)
   const getCheckedOutCount = () => users.reduce((total: number, u: User) => total + u.checkedOutDevices.length, 0)
   const getActiveUsers = () => users.filter((u: User) => u.checkedOutDevices.length > 0).length
 
@@ -69,17 +69,17 @@ export function AdminDashboard() {
   }
 
   // Pagination calculations
-  const devicesTotalPages = Math.ceil(books.length / ITEMS_PER_PAGE)
+  const devicesTotalPages = Math.ceil(devices.length / ITEMS_PER_PAGE)
   const devicesStartIndex = (devicesCurrentPage - 1) * ITEMS_PER_PAGE
   const devicesEndIndex = devicesStartIndex + ITEMS_PER_PAGE
-  const devicesToDisplay = books.slice(devicesStartIndex, devicesEndIndex)
+  const devicesToDisplay = devices.slice(devicesStartIndex, devicesEndIndex)
 
   const usersTotalPages = Math.ceil(users.length / ITEMS_PER_PAGE)
   const usersStartIndex = (usersCurrentPage - 1) * ITEMS_PER_PAGE
   const usersEndIndex = usersStartIndex + ITEMS_PER_PAGE
   const usersToDisplay = users.slice(usersStartIndex, usersEndIndex)
 
-  const availableDevices = books.filter(device => device.units > 0 && !getAdminCheckedOut().includes(device.name))
+  const availableDevices = devices.filter(device => device.units > 0 && !getAdminCheckedOut().includes(device.name))
   const availableDevicesTotalPages = Math.ceil(availableDevices.length / ITEMS_PER_PAGE)
   const availableDevicesStartIndex = (availableDevicesCurrentPage - 1) * ITEMS_PER_PAGE
   const availableDevicesEndIndex = availableDevicesStartIndex + ITEMS_PER_PAGE
@@ -153,7 +153,7 @@ export function AdminDashboard() {
                 </div>
                 <div className="ml-4">
                   <h3 className="text-lg font-medium text-gray-900">Total Devices</h3>
-                  <p className="text-3xl font-bold text-blue-600">{books.length}</p>
+                  <p className="text-3xl font-bold text-blue-600">{devices.length}</p>
                   <p className="text-sm text-gray-500">Device models</p>
                 </div>
               </div>
@@ -269,9 +269,9 @@ export function AdminDashboard() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                     {availableDevicesToDisplay.map((device) => (
                       <div key={device.name} className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h4 className="text-sm font-semibold text-gray-900">{device.name}</h4>
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <h4 className="text-sm font-semibold text-gray-900 break-words">{device.name}</h4>
                             <p className="text-xs text-gray-600">{device.units} units available</p>
                           </div>
                           <button
@@ -328,11 +328,15 @@ export function AdminDashboard() {
                     <input
                       type="text"
                       value={newDeviceName}
-                      onChange={(e) => setNewDeviceName(e.target.value)}
+                      onChange={(e) => setNewDeviceName(e.target.value.slice(0, 15))}
+                      maxLength={15}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                       placeholder="e.g. iPhone 15 Pro"
                       required
                     />
+                    <p className={`mt-1 text-xs text-right ${newDeviceName.length >= 15 ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
+                      {newDeviceName.length}/15
+                    </p>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-900 mb-2">Number of Units</label>
@@ -358,7 +362,7 @@ export function AdminDashboard() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setShowAddDevice(false)}
+                    onClick={() => { setShowAddDevice(false); setNewDeviceName(''); setNewDeviceUnits(1) }}
                     className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200"
                   >
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -380,7 +384,7 @@ export function AdminDashboard() {
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium text-gray-600">{books.length} devices in inventory</span>
+                <span className="text-sm font-medium text-gray-600">{devices.length} devices in inventory</span>
               </div>
             </div>
 
@@ -400,7 +404,7 @@ export function AdminDashboard() {
                 <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto"></div>
                 <p className="mt-4 text-lg text-gray-600 font-medium">Loading inventory...</p>
               </div>
-            ) : books.length === 0 ? (
+            ) : devices.length === 0 ? (
               <div className="text-center py-12">
                 <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -531,7 +535,7 @@ export function AdminDashboard() {
                                     className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded-full"
                                     title={deviceName}
                                   >
-                                    {deviceName.length > 15 ? `${deviceName.substring(0, 15)}...` : deviceName}
+                                    {deviceName}
                                   </span>
                                 ))}
                               </div>

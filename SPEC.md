@@ -50,7 +50,7 @@ Holds `readonly Device[]` and `readonly User[]`. All operations return a new `De
 | `removeDevice(name)`           | Decrements units; removes entry if last unit         |
 | `addUser(user)`                | Appends user                                         |
 | `updateUser(user)`             | Replaces user by id; throws if not found             |
-| `getBooks()`                   | Returns readonly device list                         |
+| `getDevices()`                 | Returns readonly device list                         |
 | `getUsers()`                   | Returns readonly user list                           |
 | `getUser(id)`                  | Finds user by id or returns `undefined`              |
 | `findDevice(name)`             | Finds device by name or returns `undefined`          |
@@ -168,9 +168,9 @@ Holds `readonly Device[]` and `readonly User[]`. All operations return a new `De
 
 | Spec file                          | Areas covered                                          |
 |------------------------------------|--------------------------------------------------------|
-| `tests/library.spec.ts`            | BDD scenarios for all use cases + business rules      |
-| `tests/viewBooks.test.ts`          | UC-1 (view devices)                                   |
-| `tests/borrowBooks.test.ts`        | UC-2 (checkout device)                                |
-| `tests/returnBooks.test.ts`        | UC-3 (return device)                                  |
+| `tests/devlab.spec.ts`             | BDD scenarios for all use cases + business rules      |
+| `tests/viewDevices.test.ts`          | UC-1 (view devices)                                   |
+| `tests/checkoutDevices.test.ts`        | UC-2 (checkout device)                                |
+| `tests/returnDevices.test.ts`        | UC-3 (return device)                                  |
 | `tests/adminFunctionality.test.ts` | UC-4, UC-5, admin/user consistency                    |
 | `tests/errorScenarios.test.ts`     | HTTP-analogue errors (400/401/403), data integrity, boundary conditions |

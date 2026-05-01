@@ -210,7 +210,7 @@ describe('Error Scenarios and Edge Cases', () => {
       service.addDevice(device1);
       service.addDevice(device2); // This should increment the existing device's units
 
-      const devices = service.getCurrentDevLab().getBooks();
+      const devices = service.getCurrentDevLab().getDevices();
       const sameModelDevices = devices.filter(d => d.name === 'Same Model');
       expect(sameModelDevices).toHaveLength(1);
       expect(sameModelDevices[0].units).toBe(2);

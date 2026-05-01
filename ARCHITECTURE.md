@@ -56,7 +56,7 @@ export class User {
 ```typescript
 export class DevLab {
   // ✅ Single Responsibility: Manages the aggregate relationship between devices and users
-  constructor(public readonly books: readonly Device[], public readonly users: readonly User[]) {}
+  constructor(public readonly devices: readonly Device[], public readonly users: readonly User[]) {}
 
   addDevice(): DevLab { /* ... */ }          // Device inventory management
   removeDevice(): DevLab { /* ... */ }       // Device inventory management
@@ -74,7 +74,7 @@ export class DevLab {
 ```typescript
 export class DevLabService {
   // ✅ Single Responsibility: Orchestrates domain operations and business workflows
-  constructor(private library: DevLab) {}
+  constructor(private devlab: DevLab) {}
 
   viewDevices(): readonly Device[] { /* ... */ }    // Read operations
   checkoutDevice(): DevLab { /* ... */ }            // Business workflow orchestration
@@ -87,11 +87,11 @@ export class DevLabService {
 
 #### Presentation Layer - Single Responsibilities
 
-**Redux Slices** (`src/store/librarySlice.ts`, `src/store/authSlice.ts`)
+**Redux Slices** (`src/store/deviceSlice.ts`, `src/store/authSlice.ts`)
 ```typescript
 // ✅ Single Responsibility: State management for specific domain
-const librarySlice = createSlice({
-  name: 'library',
+const devLabSlice = createSlice({
+  name: 'devlab',
   // Manages device state, async operations, and state transitions
 });
 
@@ -155,8 +155,8 @@ export class DevLabService {
 #### Redux Reducer Extension
 
 ```typescript
-const librarySlice = createSlice({
-  name: 'library',
+const devLabSlice = createSlice({
+  name: 'devlab',
   initialState,
   reducers: {
     // Existing reducers unchanged...
@@ -294,11 +294,11 @@ function AdminDashboard() {
 ```typescript
 // ✅ ISP: Selectors provide only needed data
 export const selectUserDevices = (state: RootState) =>
-  state.library.books.filter(device => /* user-relevant logic */);
+  state.devlab.devices.filter(device => /* user-relevant logic */);
 
 export const selectAdminStats = (state: RootState) => ({
-  totalDevices: state.library.books.length,
-  totalUsers: state.library.users.length,
+  totalDevices: state.devlab.devices.length,
+  totalUsers: state.devlab.users.length,
   // Admin-specific calculations
 });
 ```
@@ -315,7 +315,7 @@ export const selectAdminStats = (state: RootState) => ({
 ```typescript
 // ✅ DIP: DevLabService depends on abstract DevLab interface
 export class DevLabService {
-  constructor(private library: DevLab) {}  // Depends on abstraction
+  constructor(private devlab: DevLab) {}  // Depends on abstraction
 
   // Implementation details hidden behind DevLab interface
   checkoutDevice(userId: string, deviceName: string): DevLab {
@@ -325,7 +325,7 @@ export class DevLabService {
 
 // ✅ DIP: Redux thunks inject dependencies
 export const checkoutDeviceAsync = createAsyncThunk(
-  'library/checkoutDevice',
+  'devlab/checkoutDevice',
   async (params, { getState }) => {
     const state = getState() as RootState;
     // Depends on abstracted state structure
@@ -358,7 +358,7 @@ const devLabService = new DevLabService(
 // Redux store provides abstracted state access
 const store = configureStore({
   reducer: {
-    library: librarySlice.reducer,  // Abstracted state management
+    devlab: devLabSlice.reducer,  // Abstracted state management
     auth: authSlice.reducer
   }
 });

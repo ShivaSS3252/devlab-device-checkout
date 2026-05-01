@@ -26,16 +26,16 @@ This document maps each assignment story to its implementation details, includin
   - Handles data consistency and validation
 
 - **Domain Layer**: `src/domain/DevLab.ts`
-  - `getBooks()` method provides read-only access
+  - `getDevices()` method provides read-only access
   - Maintains data integrity and consistency
 
 #### **State Management**
-- **Redux Slice**: `src/store/librarySlice.ts`
-  - `fetchBooksAsync` thunk for async device loading
+- **Redux Slice**: `src/store/deviceSlice.ts`
+  - `fetchDevicesAsync` thunk for async device loading
   - Loading states and error handling
 
 #### **Tests**
-- **Primary Test**: `tests/viewBooks.test.ts`
+- **Primary Test**: `tests/viewDevices.test.ts`
   - Empty DevLab scenarios
   - Populated DevLab scenarios
   - Data consistency validation
@@ -98,7 +98,7 @@ m0n1o2p - Add admin device inventory view with pagination
   - User-friendly error messages
 
 #### **Tests**
-- **Primary Test**: `tests/borrowBooks.test.ts` (9 test scenarios)
+- **Primary Test**: `tests/checkoutDevices.test.ts` (9 test scenarios)
   - Checkout capacity validation
   - Duplicate checkout prevention
   - Multi-unit device handling
@@ -113,7 +113,7 @@ m0n1o2p - Add admin device inventory view with pagination
   - Concurrent operations
 
 #### **State Management**
-- **Redux Integration**: `src/store/librarySlice.ts`
+- **Redux Integration**: `src/store/deviceSlice.ts`
   - checkout async thunk
   - State synchronization
   - Error state management
@@ -169,7 +169,7 @@ g5h6i7j - Implement checkout limits and duplicate prevention
   - Error handling
 
 #### **Tests**
-- **Primary Test**: `tests/returnBooks.test.ts` (6 test scenarios)
+- **Primary Test**: `tests/returnDevices.test.ts` (6 test scenarios)
   - Return existing checked out devices
   - Return increments existing device units
   - Return creates new device entry if needed
@@ -180,7 +180,7 @@ g5h6i7j - Implement checkout limits and duplicate prevention
   - Edge cases and boundary conditions
 
 #### **State Management**
-- **Redux Slice**: `src/store/librarySlice.ts`
+- **Redux Slice**: `src/store/deviceSlice.ts`
   - return async thunk
   - State updates and synchronization
 

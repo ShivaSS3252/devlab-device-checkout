@@ -13,7 +13,7 @@
 - **Status**: ✅ **COMPLETED**
 - **Implementation**: `UserDashboard.tsx` displays device grid with availability status
 - **Admin View**: `AdminDashboard.tsx` with pagination support
-- **Tests**: `tests/viewBooks.test.ts` (2 scenarios) + integration tests
+- **Tests**: `tests/viewDevices.test.ts` (2 scenarios) + integration tests
 - **Coverage**: Real-time availability indicators, loading states, error handling
 
 ### ✅ **Story 2: Checking Out Devices**
@@ -21,7 +21,7 @@
 - **Business Rules**: 2-device limit, duplicate prevention, inventory management
 - **Validation**: `User.canCheckoutMore()`, `User.hasDevice()`
 - **Error Handling**: `CheckoutLimitError`, `DuplicateCheckoutError`
-- **Tests**: `tests/borrowBooks.test.ts` (9 comprehensive scenarios)
+- **Tests**: `tests/checkoutDevices.test.ts` (9 comprehensive scenarios)
 - **UI**: Conditional checkout buttons with real-time limit tracking
 
 ### ✅ **Story 3: Returning Devices**
@@ -29,7 +29,7 @@
 - **Logic**: `User.returnDevice()`, `DevLab.addDevice()` for inventory management
 - **Consistency**: Existing devices increment unit count, new devices added to inventory
 - **Validation**: User must have checked out the device to return it
-- **Tests**: `tests/returnBooks.test.ts` (6 scenarios) + edge cases
+- **Tests**: `tests/returnDevices.test.ts` (6 scenarios) + edge cases
 
 ### ✅ **Story 4: Admin Management**
 - **Status**: ✅ **COMPLETED**
@@ -105,9 +105,9 @@
 - **Error Classes**: 100% coverage
 
 ### ✅ **Stories Test Coverage**
-- **Story 1**: `viewBooks.test.ts` + admin functionality tests
-- **Story 2**: `borrowBooks.test.ts` (9 scenarios) + admin tests
-- **Story 3**: `returnBooks.test.ts` (6 scenarios) + edge case tests
+- **Story 1**: `viewDevices.test.ts` + admin functionality tests
+- **Story 2**: `checkoutDevices.test.ts` (9 scenarios) + admin tests
+- **Story 3**: `returnDevices.test.ts` (6 scenarios) + edge case tests
 - **Story 4**: `adminFunctionality.test.ts` (17 scenarios)
 
 ### ✅ **Edge Cases & Error Scenarios**

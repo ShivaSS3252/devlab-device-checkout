@@ -25,7 +25,14 @@ const MOCK_USERS: Record<string, User> = {
     role: 'user' as UserRole,
     avatar: 'https://via.placeholder.com/40'
   },
-  'admin1': {
+  'user2': {
+    id: 'user2',
+    name: 'Jane Smith',
+    email: 'jane@example.com',
+    role: 'user' as UserRole,
+    avatar: 'https://via.placeholder.com/40'
+  },
+'admin1': {
     id: 'admin1',
     name: 'Admin User',
     email: 'admin@devlab.com',
@@ -54,6 +61,8 @@ class AuthService {
     let user: User;
     if (credentials.provider === 'google' && credentials.code.includes('admin')) {
       user = MOCK_USERS.admin1;
+    } else if (credentials.code.includes('user2')) {
+      user = MOCK_USERS.user2;
     } else {
       user = MOCK_USERS.user1;
     }

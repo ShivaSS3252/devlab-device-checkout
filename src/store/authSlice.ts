@@ -3,7 +3,7 @@ import { AuthState, User, LoginCredentials } from '@/types/auth';
 import { User as DomainUser } from '@/domain/User';
 import { RootState } from './index';
 import { authService } from '@/services/authService';
-import { setCurrentUser } from './librarySlice';
+import { setCurrentUser } from './deviceSlice';
 
 const initialState: AuthState = {
   user: null,
@@ -22,11 +22,11 @@ export const loginAsync = createAsyncThunk(
   'auth/login',
   async (credentials: LoginCredentials, { dispatch, getState }) => {
     const token = await authService.login(credentials);
-    // Find the domain user that matches the auth user
     const state = getState() as RootState;
-    const domainUser = state.devlab.users.find((u: DomainUser) => u.id === token.user.id);
-    if (domainUser) {
-      dispatch(setCurrentUser(domainUser));
+    const raw = state.devlab.users.find((u: any) => u.id === token.user.id);
+    if (raw) {
+      // Reconstruct as class instance to guarantee prototype methods are available
+      dispatch(setCurrentUser(new DomainUser(raw.id, raw.name, [...(raw.checkedOutDevices || [])])));
     }
     return token;
   }

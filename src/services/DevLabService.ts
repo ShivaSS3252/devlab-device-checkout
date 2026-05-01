@@ -8,7 +8,7 @@ export class DevLabService {
   constructor(private devlab: DevLab) {}
 
   viewDevices(): readonly Device[] {
-    return this.devlab.getBooks();
+    return this.devlab.getDevices();
   }
 
   checkoutDevice(userId: string, deviceName: string): DevLab {

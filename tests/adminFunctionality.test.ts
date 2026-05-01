@@ -27,7 +27,7 @@ describe('Admin Functionality', () => {
 
       const updatedAdmin = updatedDevLab.getUser('admin1');
       expect(updatedAdmin?.checkedOutDevices).toContain('Admin Device');
-      expect(updatedDevLab.getBooks().find(d => d.name === 'Admin Device')).toBeUndefined();
+      expect(updatedDevLab.getDevices().find(d => d.name === 'Admin Device')).toBeUndefined();
     });
 
     it('should enforce same checkout limits for admin users', () => {
@@ -167,7 +167,7 @@ describe('Admin Functionality', () => {
 
     it('should handle empty DevLab operations', () => {
       const emptyDevLab = service.getCurrentDevLab();
-      expect(emptyDevLab.getBooks()).toHaveLength(0);
+      expect(emptyDevLab.getDevices()).toHaveLength(0);
       expect(emptyDevLab.getUsers()).toHaveLength(2); // Admin and regular user added in beforeEach
     });
 
