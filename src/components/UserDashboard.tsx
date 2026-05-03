@@ -1,291 +1,244 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useAppDispatch, useAppSelector } from '@/store/hooks'
-import { fetchDevicesAsync, checkoutDeviceAsync, returnDeviceAsync } from '@/store/deviceSlice'
-import { logoutAsync } from '@/store/authSlice'
+import { useRouter } from 'next/navigation'
+import { useAuthStore } from '@/store/useAuthStore'
+import { useDeviceStore } from '@/store/useDeviceStore'
 import { Device } from '@/domain/Device'
 import { MAX_DEVICES_PER_USER } from '@/constants/borrowing'
 
+const T = {
+  bg:         '#0d1117',
+  card:       '#161b22',
+  border:     'rgba(255,255,255,0.09)',
+  teal:       '#00d4aa',
+  sky:        '#0ea5e9',
+  textPri:    '#e6edf3',
+  textSub:    'rgba(230,237,243,0.72)',
+  textMuted:  'rgba(230,237,243,0.52)',
+  inputBg:    'rgba(255,255,255,0.06)',
+  inputBorder:'rgba(255,255,255,0.13)',
+  rowHover:   'rgba(255,255,255,0.04)',
+}
+
+function StockBadge({ units }: { units: number }) {
+  const cfg =
+    units === 0 ? { label: 'Out of Stock', bg: 'rgba(239,68,68,0.12)',  color: '#f87171', border: 'rgba(239,68,68,0.25)' } :
+    units === 1 ? { label: 'Low Stock',    bg: 'rgba(245,158,11,0.12)', color: '#fbbf24', border: 'rgba(245,158,11,0.25)' } :
+                  { label: 'Available',    bg: 'rgba(0,212,170,0.1)',   color: '#00d4aa', border: 'rgba(0,212,170,0.22)' }
+  return (
+    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold"
+      style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}>
+      {cfg.label}
+    </span>
+  )
+}
+
 export function UserDashboard() {
-  const dispatch = useAppDispatch()
-  const { user } = useAppSelector((state) => state.auth)
-  const { devices, isLoading, error, currentUser } = useAppSelector((state) => state.devlab)
+  const router = useRouter()
+  const { user, initializeAuth, logout } = useAuthStore()
+  const { devices, currentUser, error, setCurrentUser, checkout, returnDevice, clearError } = useDeviceStore()
 
-  useEffect(() => {
-    dispatch(fetchDevicesAsync())
-  }, [dispatch])
+  useEffect(() => { initializeAuth() }, [initializeAuth])
+  useEffect(() => { if (user) setCurrentUser(user.id) }, [user, setCurrentUser])
 
-  const handleCheckout = async (deviceName: string) => {
-    if (user) {
-      await dispatch(checkoutDeviceAsync({ userId: user.id, deviceName: deviceName }))
-    }
+  const handleLogout = async () => { await logout(); router.push('/login') }
+
+  const handleCheckout = (deviceName: string) => {
+    if (user) { clearError(); checkout(user.id, deviceName) }
   }
-
-  const handleReturn = async (deviceName: string) => {
-    if (user) {
-      await dispatch(returnDeviceAsync({ userId: user.id, deviceName: deviceName }))
-    }
-  }
-
-  const getDeviceStatus = (device: Device) => {
-    if (device.units === 0) return 'Out of Stock'
-    if (device.units === 1) return `${device.units} unit available`
-    return `${device.units} units available`
-  }
-
-  const isDeviceCheckedOutByUser = (deviceName: string) => {
-    return currentUser?.checkedOutDevices?.includes(deviceName) || false
+  const handleReturn = (deviceName: string) => {
+    if (user) { clearError(); returnDevice(user.id, deviceName) }
   }
 
   const checkedOutCount = currentUser?.checkedOutDevices?.length || 0
+  const checkedOutNames = currentUser?.checkedOutDevices || []
+  const slotsLeft       = Math.max(0, MAX_DEVICES_PER_USER - checkedOutCount)
+
+  const isCheckedOut = (name: string) => checkedOutNames.includes(name)
 
   if (!user) return null
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      {/* Header */}
-      <header className="bg-white shadow-lg border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            <div className="flex items-center space-x-3">
-              <div className="h-10 w-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900">DevLab</h1>
+    <div className="min-h-screen" style={{ background: T.bg, color: T.textPri }}>
+
+      {/* ── Header ── */}
+      <header style={{ background: T.card, borderBottom: `1px solid ${T.border}` }}>
+        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="h-7 w-7 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ background: `linear-gradient(135deg,${T.teal},${T.sky})`, boxShadow: `0 0 12px rgba(0,212,170,0.3)` }}>
+              <svg className="h-3.5 w-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
+                  d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <div className="h-8 w-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-white">{user.name.charAt(0)}</span>
-                </div>
-                <span className="text-sm font-medium text-gray-700">Welcome, {user.name}</span>
+            <span className="text-sm font-bold" style={{ color: T.textPri }}>DevLab</span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <div className="h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                style={{ background: `linear-gradient(135deg,${T.teal},${T.sky})` }}>
+                {user.name.charAt(0)}
               </div>
-              <button
-                onClick={() => dispatch(logoutAsync())}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                Logout
-              </button>
+              <span className="text-xs font-medium hidden sm:block" style={{ color: T.textSub }}>{user.name}</span>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                style={{ background: 'rgba(14,165,233,0.1)', color: T.sky, border: `1px solid rgba(14,165,233,0.22)` }}>
+                user
+              </span>
             </div>
+            <button onClick={handleLogout}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150"
+              style={{ background: T.inputBg, border: `1px solid ${T.inputBorder}`, color: T.textSub }}
+              onMouseEnter={e => {
+                const b = e.currentTarget
+                b.style.background  = 'rgba(239,68,68,0.14)'
+                b.style.borderColor = 'rgba(239,68,68,0.4)'
+                b.style.color       = '#f87171'
+              }}
+              onMouseLeave={e => {
+                const b = e.currentTarget
+                b.style.background  = T.inputBg
+                b.style.borderColor = T.inputBorder
+                b.style.color       = T.textSub
+              }}>
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              Logout
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          {/* User Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-200">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-medium text-gray-900">Checked Out</h3>
-                  <p className="text-3xl font-bold text-blue-600">{checkedOutCount}</p>
-                  <p className="text-sm text-gray-500">Limit: 2 devices</p>
-                </div>
-              </div>
-            </div>
+      <main className="max-w-7xl mx-auto px-6 py-6 space-y-5">
 
-            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-200">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-medium text-gray-900">Available Slots</h3>
-                  <p className="text-3xl font-bold text-green-600">{Math.max(0, MAX_DEVICES_PER_USER - checkedOutCount)}</p>
-                  <p className="text-sm text-gray-500">Remaining slots</p>
-                </div>
-              </div>
+        {/* ── Stats ── */}
+        <div className="grid grid-cols-3 gap-4">
+          {[
+            { label: 'Checked Out', value: checkedOutCount, accent: T.teal    },
+            { label: 'Slots Left',  value: slotsLeft,       accent: T.sky     },
+            { label: 'Device Limit',value: MAX_DEVICES_PER_USER, accent: '#fbbf24' },
+          ].map((s) => (
+            <div key={s.label} className="rounded-xl p-4"
+              style={{ background: T.card, border: `1px solid ${T.border}` }}>
+              <p className="text-xs font-medium mb-1" style={{ color: T.textMuted }}>{s.label}</p>
+              <p className="text-2xl font-black" style={{ color: s.accent }}>{s.value}</p>
             </div>
+          ))}
+        </div>
 
-            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-200">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
+        {/* ── My Devices ── */}
+        {checkedOutCount > 0 && (
+          <div className="rounded-xl p-5" style={{ background: T.card, border: `1px solid ${T.border}` }}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-bold" style={{ color: '#fbbf24' }}>My Devices</h2>
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                style={{ background: checkedOutCount >= 2 ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)',
+                         color: checkedOutCount >= 2 ? '#f87171' : '#fbbf24',
+                         border: `1px solid ${checkedOutCount >= 2 ? 'rgba(239,68,68,0.25)' : 'rgba(245,158,11,0.25)'}` }}>
+                {checkedOutCount}/2 checked out
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {checkedOutNames.map((name: string) => (
+                <div key={name} className="flex items-center justify-between px-4 py-3 rounded-xl"
+                  style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.14)' }}>
+                  <div>
+                    <p className="text-xs font-semibold" style={{ color: T.textPri }}>{name}</p>
+                    <p className="text-[11px] mt-0.5" style={{ color: T.textMuted }}>Checked out by you</p>
                   </div>
+                  <button onClick={() => handleReturn(name)}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150"
+                    style={{ background: 'rgba(239,68,68,0.12)', color: '#f87171', border: '1px solid rgba(239,68,68,0.25)' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.28)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.55)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.12)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.25)' }}>
+                    Return
+                  </button>
                 </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-medium text-gray-900">Account Type</h3>
-                  <p className="text-xl font-bold text-purple-600 capitalize">{user.role}</p>
-                  <p className="text-sm text-gray-500">Access level</p>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
+        )}
 
-          {/* My Devices Section */}
-          {checkedOutCount > 0 && (
-            <div className="mb-8 bg-white rounded-xl shadow-lg border border-gray-100 p-8">
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">My Devices</h2>
-                  <p className="text-gray-600 mt-1">Devices you currently have checked out</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className={`w-3 h-3 rounded-full ${checkedOutCount >= 2 ? 'bg-red-400' : checkedOutCount === 1 ? 'bg-yellow-400' : 'bg-green-400'} animate-pulse`}></div>
-                  <span className="text-sm font-medium text-gray-600">{checkedOutCount}/2 devices checked out</span>
-                </div>
-              </div>
+        {/* ── Error banner ── */}
+        {error && (
+          <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl"
+            style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)' }}>
+            <svg className="w-4 h-4 text-red-400 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            <p className="text-xs font-medium text-red-400">{error}</p>
+          </div>
+        )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {currentUser?.checkedOutDevices?.map((deviceName) => (
-                  <div key={deviceName} className="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-sm font-semibold text-gray-900">{deviceName}</h4>
-                        <p className="text-xs text-gray-600">Checked out by you</p>
-                      </div>
-                      <button
-                        onClick={() => handleReturn(deviceName)}
-                        disabled={isLoading}
-                        className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 transform transition-all duration-200 hover:scale-105"
-                      >
-                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                        </svg>
-                        Return
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+        {/* ── Device Grid ── */}
+        <div className="rounded-xl overflow-hidden" style={{ background: T.card, border: `1px solid ${T.border}` }}>
+          <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: `1px solid ${T.border}` }}>
+            <h2 className="text-sm font-bold" style={{ color: T.teal }}>Available Devices</h2>
+            <span className="text-xs" style={{ color: T.textMuted }}>{devices.length} devices</span>
+          </div>
+
+          {devices.length === 0 ? (
+            <div className="py-12 text-center">
+              <p className="text-sm" style={{ color: T.textMuted }}>No devices in inventory yet.</p>
             </div>
-          )}
+          ) : (
+            <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {devices.map((device: Device) => {
+                const checked = isCheckedOut(device.name)
+                const atLimit = checkedOutCount >= MAX_DEVICES_PER_USER
 
-          {/* Available Devices Section */}
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
-            <div className="flex justify-between items-center mb-8">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">Available Devices</h2>
-                <p className="text-gray-600 mt-1">Browse and checkout from our device inventory</p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium text-gray-600">{devices.length} devices available</span>
-              </div>
-            </div>
+                return (
+                  <div key={device.name}
+                    className="rounded-xl p-4 flex flex-col gap-3 transition-all"
+                    style={{ background: checked ? 'rgba(239,68,68,0.04)' : 'rgba(255,255,255,0.025)',
+                             border: checked ? '1px solid rgba(239,68,68,0.15)' : `1px solid ${T.border}` }}>
 
-            {error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-center">
-                  <svg className="w-5 h-5 text-red-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
-                  <p className="text-sm text-red-700 font-medium">{error}</p>
-                </div>
-              </div>
-            )}
-
-            {isLoading ? (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto"></div>
-                <p className="mt-4 text-lg text-gray-600 font-medium">Loading devices...</p>
-              </div>
-            ) : devices.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No devices available</h3>
-                <p className="text-gray-600">Check back later for new additions to our device lab.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {devices.map((device) => (
-                  <div key={device.name} className="group bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-md hover:shadow-xl border border-gray-100 p-6 transition-all duration-300 hover:scale-105">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">{device.name}</h3>
-                        <div className="flex items-center">
-                          <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            device.units === 0 ? 'bg-red-100 text-red-800' :
-                            device.units === 1 ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-green-100 text-green-800'
-                          }`}>
-                            <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                            {device.units === 0 ? 'Out of Stock' :
-                             device.units === 1 ? 'Low Stock' :
-                             'Available'}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="ml-3">
-                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                          <span className="text-xs font-bold text-white">{device.units}</span>
-                        </div>
-                      </div>
+                    <div className="flex items-start justify-between">
+                      <p className="text-xs font-bold leading-tight" style={{ color: T.textPri }}>{device.name}</p>
+                      <StockBadge units={device.units} />
                     </div>
 
-                    <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-                      {getDeviceStatus(device)}
+                    <p className="text-[11px]" style={{ color: T.textMuted }}>
+                      {device.units === 0 ? 'No units available' :
+                       device.units === 1 ? '1 unit available' :
+                       `${device.units} units available`}
                     </p>
 
-                    <div className="flex space-x-3">
-                      {checkedOutCount >= MAX_DEVICES_PER_USER ? (
-                        <button
-                          disabled
-                          className="flex-1 inline-flex justify-center items-center px-4 py-3 border border-gray-200 text-sm font-medium rounded-lg text-gray-400 bg-gray-100 cursor-not-allowed"
-                        >
-                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                          </svg>
-                          Limit Reached
-                        </button>
-                      ) : isDeviceCheckedOutByUser(device.name) ? (
-                        <button
-                          onClick={() => handleReturn(device.name)}
-                          disabled={isLoading}
-                          className="flex-1 inline-flex justify-center items-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transform transition-all duration-200 hover:scale-105 shadow-lg"
-                        >
-                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                          </svg>
-                          Return
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleCheckout(device.name)}
-                          disabled={isLoading || device.units === 0}
-                          className="flex-1 inline-flex justify-center items-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transform transition-all duration-200 hover:scale-105 shadow-lg"
-                        >
-                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                          </svg>
-                          {device.units === 0 ? 'Out of Stock' : 'Checkout'}
-                        </button>
-                      )}
-                    </div>
+                    {atLimit && !checked ? (
+                      <button disabled
+                        className="w-full py-2 rounded-lg text-xs font-semibold cursor-not-allowed"
+                        style={{ background: T.inputBg, color: T.textMuted, border: `1px solid ${T.inputBorder}` }}>
+                        Limit Reached
+                      </button>
+                    ) : checked ? (
+                      <button onClick={() => handleReturn(device.name)}
+                        className="w-full py-2 rounded-lg text-xs font-semibold transition-all duration-150"
+                        style={{ background: 'rgba(239,68,68,0.12)', color: '#f87171', border: '1px solid rgba(239,68,68,0.25)' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.28)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.55)' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.12)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.25)' }}>
+                        Return
+                      </button>
+                    ) : (
+                      <button onClick={() => handleCheckout(device.name)}
+                        disabled={device.units === 0}
+                        className="w-full py-2 rounded-lg text-xs font-semibold text-white transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+                        style={{ background: `linear-gradient(135deg,${T.teal},${T.sky})`, boxShadow: '0 2px 8px rgba(0,212,170,0.2)' }}
+                        onMouseEnter={e => { if (!e.currentTarget.disabled) e.currentTarget.style.boxShadow = '0 2px 16px rgba(0,212,170,0.5)' }}
+                        onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,212,170,0.2)' }}>
+                        {device.units === 0 ? 'Out of Stock' : 'Checkout'}
+                      </button>
+                    )}
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                )
+              })}
+            </div>
+          )}
         </div>
+
       </main>
     </div>
   )

@@ -30,8 +30,8 @@ This document maps each assignment story to its implementation details, includin
   - Maintains data integrity and consistency
 
 #### **State Management**
-- **Redux Slice**: `src/store/deviceSlice.ts`
-  - `fetchDevicesAsync` thunk for async device loading
+- **Zustand Store**: `src/store/useDeviceStore.ts`
+  - `devices` state with localStorage persistence
   - Loading states and error handling
 
 #### **Tests**
@@ -113,10 +113,10 @@ m0n1o2p - Add admin device inventory view with pagination
   - Concurrent operations
 
 #### **State Management**
-- **Redux Integration**: `src/store/deviceSlice.ts`
-  - checkout async thunk
-  - State synchronization
-  - Error state management
+- **Zustand Store**: `src/store/useDeviceStore.ts`
+  - `checkout()` action
+  - State synchronization with localStorage
+  - Error state management via `clearError()`
 
 ### Business Rules Implemented
 1. Maximum 2 devices per user (`MAX_DEVICES_PER_USER`)
@@ -180,9 +180,9 @@ g5h6i7j - Implement checkout limits and duplicate prevention
   - Edge cases and boundary conditions
 
 #### **State Management**
-- **Redux Slice**: `src/store/deviceSlice.ts`
-  - return async thunk
-  - State updates and synchronization
+- **Zustand Store**: `src/store/useDeviceStore.ts`
+  - `returnDevice()` action
+  - State updates and localStorage synchronization
 
 ### Business Rules Implemented
 1. User must have checked out the device
@@ -258,9 +258,10 @@ a0b1c2d - Test return operations and edge cases
   - Data integrity
 
 #### **State Management**
-- **Redux Integration**: Full admin state management
-- **Async Operations**: All admin actions properly handled
-- **Error States**: Comprehensive error handling
+- **Zustand Store**: `src/store/useDeviceStore.ts`
+  - `addDevice()` and `addUser()` actions
+  - Persisted to localStorage; merged on hydration
+  - Error states via `clearError()`
 
 ### Admin Capabilities
 1. **Inventory Management**: Add devices, monitor unit levels
@@ -291,9 +292,11 @@ y8z9a0b - Add pagination and large dataset handling
 
 ### **Key Technologies Used**
 - **React 18** with TypeScript for type safety
-- **Next.js 14** for full-stack framework
-- **Redux Toolkit** for state management
-- **Tailwind CSS** for responsive UI
+- **Next.js 14** for full-stack framework with API routes and middleware
+- **Zustand 5** for state management with localStorage persistence
+- **jose + bcryptjs** for JWT auth and password hashing
+- **Zod + React Hook Form** for schema validation
+- **Tailwind CSS** for responsive dark-themed UI
 - **Jest** for comprehensive testing
 
 ### **Code Quality Metrics**

@@ -68,9 +68,9 @@
 
 ### ✅ **README with Architectural Decisions**
 - **File**: `README.md` - Comprehensive project documentation
-- **Architectural Decisions**: Why Redux, component architecture, authentication approach
+- **Architectural Decisions**: Why Zustand, JWT auth design, component architecture
 - **Setup Instructions**: Complete installation and development guide
-- **Technology Stack**: React 18, Next.js 14, TypeScript, Redux Toolkit
+- **Technology Stack**: React 18, Next.js 14, TypeScript, Zustand, jose, bcryptjs
 - **Features Overview**: All implemented functionality documented
 
 ### ✅ **Additional Documentation**
@@ -166,9 +166,11 @@
 
 ### ✅ **Technology Stack**
 - **Frontend**: React 18 with TypeScript
-- **Framework**: Next.js 14 (App Router)
-- **State Management**: Redux Toolkit
-- **Styling**: Tailwind CSS
+- **Framework**: Next.js 14 (App Router + API routes + middleware)
+- **State Management**: Zustand 5 with localStorage persistence
+- **Auth**: JWT via `jose` + bcryptjs password hashing + httpOnly cookies
+- **Validation**: Zod + React Hook Form
+- **Styling**: Tailwind CSS (dark theme)
 - **Testing**: Jest with React Testing Library
 - **Build Tools**: Next.js CLI, ESLint, TypeScript compiler
 

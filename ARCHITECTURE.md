@@ -87,19 +87,20 @@ export class DevLabService {
 
 #### Presentation Layer - Single Responsibilities
 
-**Redux Slices** (`src/store/deviceSlice.ts`, `src/store/authSlice.ts`)
+**Zustand Stores** (`src/store/useDeviceStore.ts`, `src/store/useAuthStore.ts`)
 ```typescript
-// ✅ Single Responsibility: State management for specific domain
-const devLabSlice = createSlice({
-  name: 'devlab',
-  // Manages device state, async operations, and state transitions
-});
+// ✅ Single Responsibility: Device state management
+export const useDeviceStore = create<DeviceStore>()(persist(
+  (set) => ({
+    // Manages device/user state and checkout operations
+  }),
+  { name: 'devlab-storage' }
+));
 
 // ✅ Single Responsibility: Authentication state management
-const authSlice = createSlice({
-  name: 'auth',
-  // Manages authentication state and user session
-});
+export const useAuthStore = create<AuthStore>()((set) => ({
+  // Manages JWT session, login, and logout
+}));
 ```
 - **Responsibility**: State management and side effects for specific domains
 - **Reason to change**: State structure or async operation logic changes
@@ -152,22 +153,16 @@ export class DevLabService {
 }
 ```
 
-#### Redux Reducer Extension
+#### Store Extension
 
 ```typescript
-const devLabSlice = createSlice({
-  name: 'devlab',
-  initialState,
-  reducers: {
-    // Existing reducers unchanged...
+// ✅ OCP: Add new actions to the Zustand store without modifying existing ones
+export const useDeviceStore = create<DeviceStore>()((set) => ({
+  // Existing actions unchanged...
+  newAdminFeature: async () => {
+    // New feature added without touching existing checkout/return logic
   },
-  extraReducers: (builder) => {
-    // ✅ OCP: Add new async actions without modifying existing reducers
-    builder.addCase(newAsyncAction.fulfilled, (state, action) => {
-      // New state handling
-    });
-  }
-});
+}));
 ```
 
 #### Configuration-Based Extension
@@ -289,18 +284,19 @@ function AdminDashboard() {
 }
 ```
 
-#### Redux Selector Segregation
+#### Store Selector Segregation
 
 ```typescript
-// ✅ ISP: Selectors provide only needed data
-export const selectUserDevices = (state: RootState) =>
-  state.devlab.devices.filter(device => /* user-relevant logic */);
+// ✅ ISP: Components subscribe only to the slice of state they need
+function UserDashboard() {
+  const devices = useDeviceStore((s) => s.devices);      // user-relevant only
+  const checkout = useDeviceStore((s) => s.checkout);
+}
 
-export const selectAdminStats = (state: RootState) => ({
-  totalDevices: state.devlab.devices.length,
-  totalUsers: state.devlab.users.length,
-  // Admin-specific calculations
-});
+function AdminDashboard() {
+  const users = useDeviceStore((s) => s.users);          // admin-relevant only
+  const addDevice = useDeviceStore((s) => s.addDevice);
+}
 ```
 
 ---
@@ -323,14 +319,9 @@ export class DevLabService {
   }
 }
 
-// ✅ DIP: Redux thunks inject dependencies
-export const checkoutDeviceAsync = createAsyncThunk(
-  'devlab/checkoutDevice',
-  async (params, { getState }) => {
-    const state = getState() as RootState;
-    // Depends on abstracted state structure
-  }
-);
+// ✅ DIP: Zustand store actions are injected and consumed abstractly
+const checkout = useDeviceStore((s) => s.checkout);
+// Components depend on the store contract, not the Zustand implementation
 ```
 
 #### Framework Independence
@@ -355,13 +346,9 @@ const devLabService = new DevLabService(
   new DevLab(initialDevices, initialUsers)  // Abstracted data source
 );
 
-// Redux store provides abstracted state access
-const store = configureStore({
-  reducer: {
-    devlab: devLabSlice.reducer,  // Abstracted state management
-    auth: authSlice.reducer
-  }
-});
+// Zustand stores provide abstracted state access
+// useDeviceStore — device/user domain
+// useAuthStore  — JWT session domain
 ```
 
 ---
@@ -410,8 +397,8 @@ Infrastructure ← Application ← Domain
 - **Separation**: Read and write operations are distinct
 
 ### Observer Pattern
-- **Redux Store**: State changes notify subscribed components
-- **Middleware**: Async operations trigger state updates
+- **Zustand Stores**: State changes notify subscribed components via fine-grained selectors
+- **Middleware (middleware.ts)**: JWT verification triggers route-level redirects before component render
 
 ---
 

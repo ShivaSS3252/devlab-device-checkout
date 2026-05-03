@@ -8,79 +8,87 @@ This project implements a comprehensive test device checkout system with React, 
 
 ### ✨ Key Features
 
-- **🔐 Authentication System**: Mock OAuth2 with role-based access (User/Admin)
+- **🔐 Authentication System**: JWT-based auth with bcryptjs password hashing, httpOnly cookies, and role-based access (User/Admin)
 - **👤 User Dashboard**: Browse devices, checkout/return with business rule enforcement
 - **👨‍💼 Admin Dashboard**: Manage inventory, view user activity, add devices
 - **🏗️ Domain Logic**: Clean architecture with SOLID principles and TDD
-- **🔄 State Management**: Redux Toolkit for predictable state updates
-- **🎨 UI/UX**: Modern, responsive interface with Tailwind CSS
-- **⚠️ Error Handling**: Comprehensive error boundaries and user feedback
+- **🔄 State Management**: Zustand with localStorage persistence
+- **🎨 UI/UX**: Modern, responsive dark-themed interface with Tailwind CSS
+- **⚠️ Error Handling**: Error boundaries, toast notifications, and comprehensive user feedback
 
 ---
 
 ## 🏗️ Architectural Decisions
 
-### Why Redux for State Management?
+### Why Zustand for State Management?
 
-Redux Toolkit was chosen over simpler alternatives like Context API or Zustand for several key reasons:
+Zustand was chosen over Redux Toolkit for several key reasons:
 
-- **Predictable State Updates**: Redux's action-based architecture ensures all state changes are predictable and traceable
-- **Developer Tools**: Rich debugging capabilities with Redux DevTools
-- **Middleware Support**: Async thunk support for API calls and complex async operations
-- **Type Safety**: Full TypeScript integration with strongly typed actions and state
-- **Scalability**: Well-established patterns for large applications with complex state interactions
-- **Testing**: Comprehensive testing utilities for actions, reducers, and selectors
+- **Minimal Boilerplate**: No actions, reducers, or selectors needed — just a single store definition
+- **Fine-Grained Subscriptions**: Components subscribe to exact state slices, avoiding unnecessary re-renders
+- **Built-in Persistence**: `persist` middleware wires directly to localStorage with zero extra setup
+- **Type Safety**: Full TypeScript integration with inferred types and no extra typing overhead
+- **Simplicity**: Easier to test and reason about for this application's complexity level
+- **Two Stores**: `useAuthStore` (JWT session) and `useDeviceStore` (device/user data) cleanly separate concerns
 
 ### Component Architecture & Folder Structure
 
 ```
 src/
 ├── app/                    # Next.js App Router
-│   ├── layout.tsx         # Root layout with providers
-│   ├── page.tsx          # Landing page with auth routing
-│   └── providers.tsx     # Redux provider setup
+│   ├── layout.tsx         # Root layout with Providers wrapper
+│   ├── page.tsx          # Root page — auth check and role redirect
+│   ├── providers.tsx     # ToastProvider + ErrorBoundary
+│   ├── login/page.tsx    # Login route
+│   ├── admin/page.tsx    # Admin dashboard route
+│   ├── user/page.tsx     # User dashboard route
+│   └── api/auth/         # Auth API routes (login, logout, me)
 ├── components/            # React components
 │   ├── AdminDashboard.tsx # Admin management interface
 │   ├── UserDashboard.tsx  # User checkout interface
 │   ├── LoginPage.tsx      # Authentication form
-│   └── LoadingSpinner.tsx # Reusable loading component
+│   ├── Toast.tsx          # Toast notification system
+│   ├── ErrorBoundary.tsx  # React error boundary
+│   ├── LoadingSpinner.tsx # Reusable loading component
+│   └── Pagination.tsx     # Reusable pagination component
 ├── domain/                # Business logic layer
 │   ├── Device.ts         # Device entity with business rules
 │   ├── User.ts           # User entity with checkout logic
 │   └── DevLab.ts         # DevLab aggregate managing devices/users
 ├── services/              # Application services
 │   └── DevLabService.ts   # Orchestrates domain operations
-├── store/                 # Redux state management
-│   ├── index.ts          # Store configuration
-│   ├── authSlice.ts       # Authentication state
-│   ├── deviceSlice.ts     # Device state & async actions
-│   └── hooks.ts          # Typed Redux hooks
+├── store/                 # Zustand state management
+│   ├── useAuthStore.ts   # JWT session state (login/logout)
+│   └── useDeviceStore.ts # Device/user state with localStorage persistence
+├── config/
+│   └── users.ts          # Hardcoded users with bcrypt hashes
+├── contexts/
+│   └── ToastContext.tsx   # Toast notification context
+├── lib/
+│   └── schemas.ts        # Zod validation schemas
 ├── types/                 # TypeScript type definitions
 │   └── auth.ts           # Authentication types
 ├── constants/             # Business rule constants
-│   └── borrowing.ts      # Checkout limits & rules
-├── errors/                # Custom error classes
-│   ├── CheckoutLimitError.ts    # Checkout limit violations
-│   └── DuplicateCheckoutError.ts # Duplicate checkout attempts
-└── tests/                 # Test suites
-    ├── viewDevices.test.ts      # Viewing devices functionality
-    ├── checkoutDevices.test.ts    # Checking out devices functionality
-    └── returnDevices.test.ts    # Returning devices functionality
+│   └── borrowing.ts      # MAX_DEVICES_PER_USER = 2
+└── errors/                # Custom error classes
+    ├── CheckoutLimitError.ts    # Checkout limit violations
+    └── DuplicateCheckoutError.ts # Duplicate checkout attempts
+middleware.ts              # JWT verification + role-based route protection
 ```
 
 ### Authentication Flow Design Decisions
 
-**Mock Authentication Approach:**
-- **Simple Role-Based Access**: Two roles (User/Admin) with different permissions
-- **Client-Side Only**: No backend authentication - purely for demonstration
-- **Route Protection**: Automatic redirection based on authentication state
-- **State Persistence**: Redux state maintained during session
+**JWT Authentication Approach:**
+- **Role-Based Access**: Two roles (User/Admin) enforced in middleware and UI
+- **Hardcoded Users**: Three pre-seeded users with bcryptjs-hashed passwords in `src/config/users.ts`
+- **Route Protection**: `middleware.ts` verifies JWT from httpOnly cookie before rendering any protected page
+- **State Persistence**: `useAuthStore` holds client-side session; cookie survives page refresh
 
 **Design Rationale:**
-- **Separation of Concerns**: Auth logic isolated in dedicated Redux slice
-- **Type Safety**: Strongly typed user roles and permissions
-- **Scalable Structure**: Easy to extend with real authentication providers
-- **Testing Friendly**: Mock authentication simplifies component testing
+- **Separation of Concerns**: Auth API routes handle token issuance; `useAuthStore` handles client session
+- **Security**: Passwords hashed with bcryptjs; tokens stored in httpOnly cookie (not localStorage)
+- **Scalable Structure**: Swap `src/config/users.ts` for a database lookup to move to production auth
+- **Session Restore**: `GET /api/auth/me` validates the cookie on load, restoring session without re-login
 
 ### Service Layer Pattern Rationale
 
@@ -101,47 +109,42 @@ The service layer follows the **Application Service Pattern** with these design 
 
 ## 🤔 Assumptions
 
-### Mock Authentication Approach
-- **No Real Security**: Authentication is purely demonstrative - no actual user verification
-- **Static User Data**: Pre-defined users with fixed credentials for testing
-- **Session-Based**: Authentication state lost on browser refresh
-- **No Password Hashing**: Plain text password comparison (never do this in production)
+### Authentication Approach
+- **JWT with bcryptjs**: Passwords are hashed; tokens are signed JWTs (24h expiry) stored in httpOnly cookies
+- **Static User Data**: Three pre-defined users in `src/config/users.ts` — no database required
+- **Session Restored on Refresh**: `/api/auth/me` validates the cookie, restoring the Zustand session
+- **No Registration**: User accounts are seeded; no self-service sign-up
 
-### In-Memory Data Storage Justification
-- **Demonstration Purpose**: Focus on business logic rather than persistence complexity
-- **Fast Development**: No database setup required for rapid prototyping
-- **Test Isolation**: Each test starts with clean state
-- **Simplicity**: Easier to reason about and debug
-
-### Browser Storage Limitations
-- **No Persistence**: All data lost on page refresh or browser close
-- **Memory Constraints**: Large datasets would cause performance issues
-- **No Offline Support**: Application requires active browser session
-- **Security Concerns**: Sensitive data stored in memory only during session
+### Data Storage
+- **Device/User State**: Persisted in localStorage via Zustand's `persist` middleware; survives page refresh
+- **Demo Data**: Sample devices and users seeded on first load; merged with any saved state on hydration
+- **No Database**: All persistence is client-side localStorage — suitable for demonstration
 
 ---
 
-## 🔐 OAuth Authentication Documentation
+## 🔐 Authentication Documentation
 
-### Why Mock OAuth?
+### How Auth Works
 
-The application uses a **mock OAuth2 implementation** due to assignment constraints and demonstration purposes:
+The application uses a **custom JWT implementation** with hardcoded users:
 
-- **🎓 Educational Focus**: Demonstrates authentication patterns without complex backend setup
-- **⚡ Rapid Development**: No external API dependencies or OAuth provider configuration
-- **🧪 Testing Friendly**: Predictable authentication flow for component and integration tests
-- **🔒 Security Awareness**: Highlights security considerations without implementing real auth
+- **🔑 Password Security**: All passwords stored as bcryptjs hashes in `src/config/users.ts`
+- **🎫 Token Issuance**: `POST /api/auth/login` verifies password and issues a signed JWT (via `jose`)
+- **🍪 Token Storage**: JWT stored in an httpOnly cookie (not localStorage) — inaccessible to JavaScript
+- **🛡️ Route Protection**: `middleware.ts` verifies the cookie before rendering `/admin` or `/user`
+- **🔄 Session Restore**: `GET /api/auth/me` validates the cookie on page load; Zustand hydrates from it
 
-### Mock vs Real OAuth Implementation
+### Current vs Production Auth
 
-| Aspect | Mock Implementation | Real Production Implementation |
-|--------|-------------------|------------------------------|
-| **Token Generation** | Client-side string concatenation | Cryptographically secure JWTs |
-| **User Verification** | Hardcoded mock users | OAuth provider validation |
-| **Token Storage** | localStorage (insecure) | HTTP-only cookies, secure storage |
-| **Security** | None - demonstration only | PKCE, state parameters, CSRF protection |
-| **Persistence** | Browser session only | Database-backed user sessions |
-| **Providers** | Simulated Google/GitHub | Real OAuth2/OIDC providers |
+| Aspect | Current Implementation | Production Path |
+|--------|------------------------|-----------------|
+| **User Store** | Hardcoded in `src/config/users.ts` | Database (Postgres/MongoDB) |
+| **Password Hashing** | bcryptjs ✅ | bcryptjs / Argon2 |
+| **Token Storage** | httpOnly cookie ✅ | httpOnly cookie ✅ |
+| **Token Signing** | jose SignJWT ✅ | Same or OAuth provider |
+| **Expiry** | 24h | Configurable |
+| **Registration** | Not supported | User sign-up flow |
+| **OAuth Providers** | Not integrated | NextAuth.js + Google/GitHub |
 
 ### Real OAuth2 Implementation Guide
 
@@ -332,7 +335,9 @@ export class SecureAuthService {
 - **React 18**: Modern React with hooks and concurrent features
 - **Next.js 14**: Full-stack React framework with App Router
 - **TypeScript 5.0**: Strict type checking and modern JavaScript features
-- **Redux Toolkit**: State management with async thunks and devtools
+- **Zustand 5**: Lightweight state management with localStorage persistence
+- **jose + bcryptjs**: JWT signing and secure password hashing
+- **Zod + React Hook Form**: Schema validation and form management
 
 ### UI & Styling
 - **Tailwind CSS 4.1**: Utility-first CSS framework
@@ -354,12 +359,15 @@ export class SecureAuthService {
 ```json
 {
   "dependencies": {
-    "@reduxjs/toolkit": "^1.9.5",
-    "@tailwindcss/postcss": "^4.1.18",
     "next": "^14.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-redux": "^8.1.1"
+    "zustand": "^5.0.0",
+    "jose": "latest",
+    "bcryptjs": "latest",
+    "zod": "latest",
+    "react-hook-form": "latest",
+    "@tailwindcss/postcss": "^4.1.18"
   }
 }
 ```
@@ -505,34 +513,22 @@ The project follows Test-Driven Development (TDD) with comprehensive test covera
 ## ⚠️ Known Limitations
 
 ### Authentication & Security
-- **Mock Authentication**: No real user verification or security
-- **No Password Security**: Plain text credentials (demonstration only)
-- **Session Only**: No persistent authentication across browser sessions
-- **No Account Management**: No user registration or password reset
+- **Hardcoded Users**: No self-service registration; users must be added to `src/config/users.ts`
+- **No Password Reset**: No forgot-password or account management flow
+- **No OAuth Providers**: Google/GitHub login not integrated (path documented above)
 
 ### Data Persistence
-- **In-Memory Only**: All data lost on page refresh
-- **No Database**: No persistent storage layer
-- **Browser Limitations**: Large datasets cause performance issues
-- **No Offline Support**: Requires active internet connection
-
-### Backend Integration
-- **No API Layer**: No real backend communication
-- **Synchronous Operations**: All operations are immediate (no network delays)
-- **No Error Recovery**: No retry logic or offline queue
-- **Mock Data Only**: No real data validation or sanitization
+- **localStorage Only**: Device/user data persists in the browser; no server-side database
+- **No Cross-Device Sync**: State is local to each browser session
+- **No Offline Queue**: Operations require an active browser session
 
 ### Testing & Quality
 - **No E2E Tests**: No Cypress or Playwright integration tests
-- **No Component Tests**: Limited React component testing
-- **No Performance Tests**: No load testing or performance monitoring
-- **No Accessibility Tests**: No automated accessibility validation
+- **No Accessibility Tests**: No automated WCAG validation
 
 ### Production Readiness
-- **No Error Boundaries**: Missing React error boundary components
-- **No Logging**: No application logging or monitoring
-- **No Analytics**: No user behavior tracking
-- **No Deployment**: No CI/CD or deployment configuration
+- **No CI/CD**: No automated deployment pipeline
+- **No Analytics or Logging**: No server-side observability
 
 ---
 
