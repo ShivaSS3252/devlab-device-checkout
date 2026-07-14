@@ -116,16 +116,16 @@ export function UserDashboard() {
       <main className="max-w-7xl mx-auto px-6 py-6 space-y-5">
 
         {/* ── Stats ── */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="flex flex-wrap gap-4">
           {[
             { label: 'Checked Out', value: checkedOutCount, accent: T.teal    },
             { label: 'Slots Left',  value: slotsLeft,       accent: T.sky     },
             { label: 'Device Limit',value: MAX_DEVICES_PER_USER, accent: '#fbbf24' },
           ].map((s) => (
-            <div key={s.label} className="rounded-xl p-4"
+            <div key={s.label} className="rounded-xl p-4 flex-1 min-w-[140px]"
               style={{ background: T.card, border: `1px solid ${T.border}` }}>
-              <p className="text-xs font-medium mb-1" style={{ color: T.textMuted }}>{s.label}</p>
-              <p className="text-2xl font-black" style={{ color: s.accent }}>{s.value}</p>
+              <p className="text-xs font-medium mb-1 break-words" style={{ color: T.textMuted }}>{s.label}</p>
+              <p className="text-2xl font-black break-words" style={{ color: s.accent }}>{s.value}</p>
             </div>
           ))}
         </div>
@@ -142,13 +142,14 @@ export function UserDashboard() {
                 {checkedOutCount}/2 checked out
               </span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="flex flex-wrap gap-3">
               {checkedOutNames.map((name: string) => (
-                <div key={name} className="flex items-center justify-between px-4 py-3 rounded-xl"
-                  style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.14)' }}>
-                  <div>
-                    <p className="text-xs font-semibold" style={{ color: T.textPri }}>{name}</p>
-                    <p className="text-[11px] mt-0.5" style={{ color: T.textMuted }}>Checked out by you</p>
+                <div key={name} className="flex items-center justify-between gap-2 px-4 py-3 rounded-xl"
+                  style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.14)',
+                           flex: '0 1 calc(50% - 6px)', minWidth: '220px', boxSizing: 'border-box' }}>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold break-words" style={{ color: T.textPri }}>{name}</p>
+                    <p className="text-[11px] mt-0.5 break-words" style={{ color: T.textMuted }}>Checked out by you</p>
                   </div>
                   <button onClick={() => handleReturn(name)}
                     className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150"
@@ -186,7 +187,7 @@ export function UserDashboard() {
               <p className="text-sm" style={{ color: T.textMuted }}>No devices in inventory yet.</p>
             </div>
           ) : (
-            <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="p-5 flex flex-wrap gap-4">
               {devices.map((device: Device) => {
                 const checked = isCheckedOut(device.name)
                 const atLimit = checkedOutCount >= MAX_DEVICES_PER_USER
@@ -195,14 +196,15 @@ export function UserDashboard() {
                   <div key={device.name}
                     className="rounded-xl p-4 flex flex-col gap-3 transition-all"
                     style={{ background: checked ? 'rgba(239,68,68,0.04)' : 'rgba(255,255,255,0.025)',
-                             border: checked ? '1px solid rgba(239,68,68,0.15)' : `1px solid ${T.border}` }}>
+                             border: checked ? '1px solid rgba(239,68,68,0.15)' : `1px solid ${T.border}`,
+                             flex: '0 1 calc(33.333% - 11px)', minWidth: '220px', boxSizing: 'border-box' }}>
 
-                    <div className="flex items-start justify-between">
-                      <p className="text-xs font-bold leading-tight" style={{ color: T.textPri }}>{device.name}</p>
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-xs font-bold leading-tight break-words flex-1 min-w-0" style={{ color: T.textPri }}>{device.name}</p>
                       <StockBadge units={device.units} />
                     </div>
 
-                    <p className="text-[11px]" style={{ color: T.textMuted }}>
+                    <p className="text-[11px] break-words" style={{ color: T.textMuted }}>
                       {device.units === 0 ? 'No units available' :
                        device.units === 1 ? '1 unit available' :
                        `${device.units} units available`}

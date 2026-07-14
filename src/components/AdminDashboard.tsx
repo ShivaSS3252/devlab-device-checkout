@@ -161,17 +161,17 @@ export function AdminDashboard() {
       <main className="max-w-7xl mx-auto px-6 py-6 space-y-5">
 
         {/* ── Stats ── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="flex flex-wrap gap-4">
           {[
             { label: 'Device Models', value: devices.length,    accent: T.teal },
             { label: 'Total Units',   value: totalUnits,         accent: T.sky  },
             { label: 'Checked Out',   value: checkedOutAll,      accent: '#fbbf24' },
             { label: 'Active Users',  value: activeUsers,        accent: '#f87171' },
           ].map((s) => (
-            <div key={s.label} className="rounded-xl p-4"
+            <div key={s.label} className="rounded-xl p-4 flex-1 min-w-[140px]"
               style={{ background: T.card, border: `1px solid ${T.border}` }}>
-              <p className="text-xs font-medium mb-1" style={{ color: T.textMuted }}>{s.label}</p>
-              <p className="text-2xl font-black" style={{ color: s.accent }}>{s.value}</p>
+              <p className="text-xs font-medium mb-1 break-words" style={{ color: T.textMuted }}>{s.label}</p>
+              <p className="text-2xl font-black break-words" style={{ color: s.accent }}>{s.value}</p>
             </div>
           ))}
         </div>
@@ -190,12 +190,13 @@ export function AdminDashboard() {
           </div>
 
           {adminCheckedOut.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+            <div className="flex flex-wrap gap-3 mb-4">
               {adminCheckedOut.map((name: string) => (
-                <div key={name} className="flex items-center justify-between px-4 py-3 rounded-xl"
-                  style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)' }}>
-                  <div>
-                    <p className="text-xs font-semibold" style={{ color: T.textPri }}>{name}</p>
+                <div key={name} className="flex items-center justify-between gap-2 px-4 py-3 rounded-xl"
+                  style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)',
+                           flex: '0 1 calc(33.333% - 8px)', minWidth: '220px', boxSizing: 'border-box' }}>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold break-words" style={{ color: T.textPri }}>{name}</p>
                     <p className="text-[11px] mt-0.5" style={{ color: T.textMuted }}>Checked out by you</p>
                   </div>
                   <button onClick={() => handleReturn(name)}
@@ -218,13 +219,14 @@ export function AdminDashboard() {
               <p className="text-xs" style={{ color: T.textMuted }}>No devices available or limit reached.</p>
             ) : (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="flex flex-wrap gap-3">
                   {availToDisplay.map((device: Device) => (
-                    <div key={device.name} className="flex items-center justify-between px-4 py-3 rounded-xl"
-                      style={{ background: 'rgba(0,212,170,0.04)', border: `1px solid rgba(0,212,170,0.12)` }}>
+                    <div key={device.name} className="flex items-center justify-between gap-2 px-4 py-3 rounded-xl"
+                      style={{ background: 'rgba(0,212,170,0.04)', border: `1px solid rgba(0,212,170,0.12)`,
+                               flex: '0 1 calc(33.333% - 8px)', minWidth: '220px', boxSizing: 'border-box' }}>
                       <div className="min-w-0 mr-3">
-                        <p className="text-xs font-semibold truncate" style={{ color: T.textPri }}>{device.name}</p>
-                        <p className="text-[11px] mt-0.5" style={{ color: T.textMuted }}>{device.units} units</p>
+                        <p className="text-xs font-semibold break-words" style={{ color: T.textPri }}>{device.name}</p>
+                        <p className="text-[11px] mt-0.5 break-words" style={{ color: T.textMuted }}>{device.units} units</p>
                       </div>
                       <button onClick={() => handleCheckout(device.name)}
                         disabled={adminCheckedOut.length >= 2}
@@ -274,25 +276,25 @@ export function AdminDashboard() {
 
           {showAddDevice && (
             <form onSubmit={handleSubmit(onAddDevice)}
-              className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4"
+              className="flex flex-wrap gap-4 pt-4"
               style={{ borderTop: `1px solid ${T.border}` }}>
-              <div>
+              <div style={{ flex: '0 1 calc(50% - 8px)', minWidth: '180px', boxSizing: 'border-box' }}>
                 <label className="block text-[10px] font-bold uppercase tracking-widest mb-1.5"
                   style={{ color: T.textMuted }}>Device Name</label>
                 <input {...register('name')} maxLength={15} autoComplete="off"
                   className="w-full px-3.5 py-2.5 rounded-xl text-sm outline-none transition-all"
                   style={{ background: T.inputBg, border: errors.name ? '1.5px solid #ef4444' : `1.5px solid ${T.inputBorder}`, color: T.textPri }} />
-                {errors.name && <p className="mt-1 text-[11px] text-red-400">{errors.name.message}</p>}
+                {errors.name && <p className="mt-1 text-[11px] text-red-400 break-words">{errors.name.message}</p>}
               </div>
-              <div>
+              <div style={{ flex: '0 1 calc(50% - 8px)', minWidth: '180px', boxSizing: 'border-box' }}>
                 <label className="block text-[10px] font-bold uppercase tracking-widest mb-1.5"
                   style={{ color: T.textMuted }}>Units</label>
                 <input type="number" min="1" {...register('units', { valueAsNumber: true })}
                   className="w-full px-3.5 py-2.5 rounded-xl text-sm outline-none transition-all"
                   style={{ background: T.inputBg, border: errors.units ? '1.5px solid #ef4444' : `1.5px solid ${T.inputBorder}`, color: T.textPri }} />
-                {errors.units && <p className="mt-1 text-[11px] text-red-400">{errors.units.message}</p>}
+                {errors.units && <p className="mt-1 text-[11px] text-red-400 break-words">{errors.units.message}</p>}
               </div>
-              <div className="sm:col-span-2 flex gap-2">
+              <div className="w-full flex gap-2">
                 <button type="submit"
                   className="px-4 py-2 rounded-lg text-xs font-semibold text-white transition-all duration-150"
                   style={{ background: `linear-gradient(135deg,${T.teal},${T.sky})`, boxShadow: '0 2px 10px rgba(0,212,170,0.25)' }}
@@ -325,29 +327,23 @@ export function AdminDashboard() {
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-xs">
-                  <thead>
-                    <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
-                      {['Device Name','Units','Status'].map((h) => (
-                        <th key={h} className="px-5 py-3 text-left font-semibold uppercase tracking-wider"
-                          style={{ color: T.textMuted, borderBottom: `1px solid ${T.border}` }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {devicesToDisplay.map((d: Device) => (
-                      <tr key={d.name} className="transition-colors"
-                        style={{ borderBottom: `1px solid ${T.border}` }}
-                        onMouseEnter={e => (e.currentTarget.style.background = T.rowHover)}
-                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                        <td className="px-5 py-3 font-semibold" style={{ color: T.textPri }}>{d.name}</td>
-                        <td className="px-5 py-3" style={{ color: T.textSub }}>{d.units}</td>
-                        <td className="px-5 py-3"><StatusBadge units={d.units} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div>
+                <div className="flex flex-wrap items-stretch" style={{ background: 'rgba(255,255,255,0.02)', borderBottom: `1px solid ${T.border}` }}>
+                  {['Device Name','Units','Status'].map((h) => (
+                    <div key={h} className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider break-words"
+                      style={{ color: T.textMuted, width: '33.33%', minWidth: 0, boxSizing: 'border-box' }}>{h}</div>
+                  ))}
+                </div>
+                {devicesToDisplay.map((d: Device) => (
+                  <div key={d.name} className="flex flex-wrap items-stretch transition-colors"
+                    style={{ borderBottom: `1px solid ${T.border}` }}
+                    onMouseEnter={e => (e.currentTarget.style.background = T.rowHover)}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                    <div className="px-5 py-3 text-xs font-semibold break-words" style={{ color: T.textPri, width: '33.33%', minWidth: 0, boxSizing: 'border-box' }}>{d.name}</div>
+                    <div className="px-5 py-3 text-xs break-words" style={{ color: T.textSub, width: '33.33%', minWidth: 0, boxSizing: 'border-box' }}>{d.units}</div>
+                    <div className="px-5 py-3 break-words" style={{ width: '33.33%', minWidth: 0, boxSizing: 'border-box' }}><StatusBadge units={d.units} /></div>
+                  </div>
+                ))}
               </div>
               <div className="px-5 py-3">
                 <Pagination currentPage={devicesPage} totalPages={Math.ceil(devices.length / ITEMS_PER_PAGE)}
@@ -370,49 +366,48 @@ export function AdminDashboard() {
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-xs">
-                  <thead>
-                    <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
-                      {['User','Checked Out','Devices','Status'].map((h) => (
-                        <th key={h} className="px-5 py-3 text-left font-semibold uppercase tracking-wider"
-                          style={{ color: T.textMuted, borderBottom: `1px solid ${T.border}` }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {usersToDisplay.map((u: User) => (
-                      <tr key={u.id} className="transition-colors"
-                        style={{ borderBottom: `1px solid ${T.border}` }}
-                        onMouseEnter={e => (e.currentTarget.style.background = T.rowHover)}
-                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                        <td className="px-5 py-3">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
-                              style={{ background: `linear-gradient(135deg,${T.teal},${T.sky})` }}>
-                              {u.name.charAt(0)}
-                            </div>
-                            <span className="font-semibold" style={{ color: T.textPri }}>{u.name}</span>
-                          </div>
-                        </td>
-                        <td className="px-5 py-3" style={{ color: T.textSub }}>{u.checkedOutDevices.length}</td>
-                        <td className="px-5 py-3">
-                          <div className="flex flex-wrap gap-1">
-                            {u.checkedOutDevices.length === 0
-                              ? <span style={{ color: T.textMuted }}>—</span>
-                              : u.checkedOutDevices.map((name: string, i: number) => (
-                                  <span key={i} className="px-2 py-0.5 rounded text-[10px] font-medium"
-                                    style={{ background: 'rgba(0,212,170,0.08)', color: T.teal, border: `1px solid rgba(0,212,170,0.18)` }}>
-                                    {name}
-                                  </span>
-                                ))}
-                          </div>
-                        </td>
-                        <td className="px-5 py-3"><UserStatusBadge count={u.checkedOutDevices.length} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div>
+                <div className="flex flex-wrap items-stretch" style={{ background: 'rgba(255,255,255,0.02)', borderBottom: `1px solid ${T.border}` }}>
+                  {[
+                    { label: 'User',        width: '30%' },
+                    { label: 'Checked Out', width: '15%' },
+                    { label: 'Devices',     width: '35%' },
+                    { label: 'Status',      width: '20%' },
+                  ].map((h) => (
+                    <div key={h.label} className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider break-words"
+                      style={{ color: T.textMuted, width: h.width, minWidth: 0, boxSizing: 'border-box' }}>{h.label}</div>
+                  ))}
+                </div>
+                {usersToDisplay.map((u: User) => (
+                  <div key={u.id} className="flex flex-wrap items-stretch transition-colors"
+                    style={{ borderBottom: `1px solid ${T.border}` }}
+                    onMouseEnter={e => (e.currentTarget.style.background = T.rowHover)}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                    <div className="px-5 py-3" style={{ width: '30%', minWidth: 0, boxSizing: 'border-box' }}>
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
+                          style={{ background: `linear-gradient(135deg,${T.teal},${T.sky})` }}>
+                          {u.name.charAt(0)}
+                        </div>
+                        <span className="font-semibold break-words text-xs" style={{ color: T.textPri, minWidth: 0, flex: 1 }}>{u.name}</span>
+                      </div>
+                    </div>
+                    <div className="px-5 py-3 text-xs break-words" style={{ color: T.textSub, width: '15%', minWidth: 0, boxSizing: 'border-box' }}>{u.checkedOutDevices.length}</div>
+                    <div className="px-5 py-3" style={{ width: '35%', minWidth: 0, boxSizing: 'border-box' }}>
+                      <div className="flex flex-wrap gap-1">
+                        {u.checkedOutDevices.length === 0
+                          ? <span style={{ color: T.textMuted }}>—</span>
+                          : u.checkedOutDevices.map((name: string, i: number) => (
+                              <span key={i} className="px-2 py-0.5 rounded text-[10px] font-medium break-words"
+                                style={{ background: 'rgba(0,212,170,0.08)', color: T.teal, border: `1px solid rgba(0,212,170,0.18)` }}>
+                                {name}
+                              </span>
+                            ))}
+                      </div>
+                    </div>
+                    <div className="px-5 py-3 break-words" style={{ width: '20%', minWidth: 0, boxSizing: 'border-box' }}><UserStatusBadge count={u.checkedOutDevices.length} /></div>
+                  </div>
+                ))}
               </div>
               <div className="px-5 py-3">
                 <Pagination currentPage={usersPage} totalPages={Math.ceil(users.length / ITEMS_PER_PAGE)}
